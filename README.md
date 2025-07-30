@@ -3,13 +3,14 @@ Open Access Funding Request Workflow Project
 
 -- Front --
 
-Receive request form through Google Form
+Receive request form through Google Form : https://forms.gle/7zuYWzMdzo7xb5cNA
 
 Google Form > Notify people of interest
 
+Google Form > Google Sheets (For records backup) : https://docs.google.com/spreadsheets/d/1_vuH2IYn1MVbEx91_3d_FFD4xml47bk6eqBUttAdTgA/edit?usp=sharing
+
 Google Form > Google Apps Script > Server
 
-Google Form > Google Sheets (For records backup)
 
 
 -- Back --
