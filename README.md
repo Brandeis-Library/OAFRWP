@@ -12,12 +12,16 @@ Google Form > Google Sheets (For records backup) : https://docs.google.com/sprea
 Google Form > Google Apps Script > Server
 
 
+Dashboard > Talks with main server for visuals
+
+
+
 
 -- Back --
 
 Main Server > REST API for form input
 
-Main Server > Keep track of all form input (CSV? DB? Schema-less DB?)
+Main Server > Keep track of all form input [AS CSV]
 
 Main Server > Keep track of all invoices (PDF file naming)
 
@@ -28,7 +32,3 @@ Main Server > Keep track of all workflow status (Requested, Approved, Paid)
 Main Server > Send Email on trigger (Requested, Approved, Paid)
 
 Main Server > Manage email recipents
-
-DB?
-
-NGINX?

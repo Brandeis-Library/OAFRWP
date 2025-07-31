@@ -1,0 +1,16 @@
+{
+  "name": "oafrwp",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "csv": "^6.4.1",
+    "express": "^5.1.0"
+  }
+}
