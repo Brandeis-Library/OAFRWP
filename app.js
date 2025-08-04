@@ -8,7 +8,139 @@ import fs from 'fs'
 import { parse } from 'csv-parse'
 const __dirname = new URL(".", import.meta.url).pathname
 const __filename = 'empty.csv'
+const __budgetFileName = 'budget.csv'
 import os from 'os'
+
+
+
+//updates budget with specific amount (+ or -)
+//query goes like this
+// /updateBudget/+5000?reason=donation
+// /updateBudget/-100000?reason=librarywidecoffeebreak
+//amount param is mandatory and reason query is optional ('update budget' by default)
+app.put('/updateBudget/:amount', (req, res) => {
+
+    new Promise((resolve, reject) => {
+
+        let date_time = new Date();
+        const timestamp = date_time.toISOString()
+
+        let totalAmount = undefined
+        let changeAmount = undefined
+        let reason = 'update budget'
+
+        if (req.params.amount) { changeAmount = req.params.amount } else { reject() }
+        if (req.query.reason) { reason = req.query.reason }
+
+        fs.readFile(`${__dirname}/${__budgetFileName}`, 'utf8', (err, data) => {
+
+            if (err) { reject() }
+
+            const lines = data.trim().split(os.EOL)
+
+            if (lines.length == 1) {
+                
+                totalAmount = changeAmount
+            
+            } else {
+
+                totalAmount = lines[lines.length -1].split(",")[1] + changeAmount
+
+            }
+
+            let input = [
+                timestamp,
+                totalAmount,
+                changeAmount,
+                reason
+            ]
+
+            fs.appendFile(`${__dirname}/${__budgetFileName}`, input.join(",") + os.EOL, (err) => {
+
+                if (err) { reject() }
+
+                resolve()
+
+            })
+
+        })
+
+    }).then(() => {
+
+        res.status(200).send(200)
+
+    }, () => {
+
+        res.status(400).send(400)
+
+    })
+
+})
+
+//sets Budget to specific number
+//query goes like this
+// /setBudget/100000&reason=budget increase
+// /setBudget/0&reason=budget cut
+//this is used to set initial budget or huge change in total budget
+//amount param is mandatory and reason query is optional ('set budget' by default)
+app.post('/setBudget/:amount', (req, res) => {
+
+    new Promise((resolve, reject) => {
+
+        let date_time = new Date()
+        const timestamp = date_time.toISOString()
+        
+        let totalAmount = undefined
+        let changeAmount = undefined
+        let reason = 'set budget'
+        
+        if(req.params.amount) { totalAmount = req.params.amount } else { reject() }
+        if(req.query.reason) { reason = req.query.reason }
+        
+        fs.readFile(`${__dirname}/${__budgetFileName}`, 'utf8', (err, data) => {
+
+            if(err) { reject() }
+
+            const lines = data.trim().split(os.EOL)
+
+            if (lines.length == 1) {
+
+                changeAmount = totalAmount 
+            
+            } else { 
+                
+                changeAmount = totalAmount - lines[lines.length - 1].split(',')[1] 
+            
+            }
+
+            let input = [
+                timestamp,
+                totalAmount,
+                changeAmount,
+                reason
+            ]
+
+            fs.appendFile(`${__dirname}/${__budgetFileName}`, input.join(",") + os.EOL, (err) => {
+
+                if(err) { reject() }
+
+                resolve()
+
+            })
+
+        })
+
+    }).then(() => { //ON RESOLVE
+
+        res.status(200).send(200)
+
+    }, () => {      //ON REJECT
+
+        res.status(400).send(400)
+
+    })
+
+})
 
 //Edits specific line
 //query goes like
@@ -131,11 +263,11 @@ app.put('/update/:timestamp', (req, res) => {
 
 		res.status(200).send('asdf')
 
-	}, (err) => {	//ON REJECT
+	}, () => {	//ON REJECT
 
 		fs.copyFileSync(`${__dirname}/tmp.csv`,`${__dirname}/${__filename}`)
 
-		console.log(err)
+		// console.log(err)
 
 		res.status(400).send('err')
 
@@ -167,8 +299,7 @@ app.post('/create', (req, res) => {
 	new Promise((resolve, reject) => {
 
 		let date_time = new Date()
-
-		const timestamp = date_time.getFullYear() + "-" + date_time.getMonth() + "-" + date_time.getDate() + "-" + date_time.getHours() + "-" + date_time.getMinutes() + "-" + date_time.getSeconds()
+		const timestamp = date_time.toISOString()
 
 		let email = undefined			//author email
 		let title = undefined			//title of article
@@ -246,7 +377,7 @@ app.post('/create', (req, res) => {
 
 })
 
-//Fetching CSV as JSON
+//Fetching records as JSON
 app.get('/fetch', (req, res) => {
 
 	new Promise((resolve, reject) => {
@@ -282,16 +413,55 @@ app.get('/fetch', (req, res) => {
 
 })
 
+//Fetching Budgets as JSON
+app.get('/fetchBudget', (req, res) => {
+
+	new Promise((resolve, reject) => {
+
+		fs.readFile(`${__dirname}/${__budgetFileName}`, (err, data) => {
+
+			if (err) { reject(err) }
+
+			parse(data, {
+
+				columns: true,
+				skip_empty_lines: true
+
+			}, (err, records) => {
+
+				if (err) { reject(err) }
+
+				resolve(records) //this goes to .then as 'parsed'
+
+			})
+
+		})
+
+	}).then((parsed) => {
+
+		res.status(200).send(JSON.stringify(parsed))
+
+	}, () => {
+
+		res.status(400).send(400)
+
+	})
+
+})
+
 //TESTING PURPOSE ONLY
 //Updating CSV
 app.get('/test', (req, res) => {
 
 	new Promise((resolve, reject) => {
 
+        let date_time = new Date()
+        const timestamp = date_time.toISOString()
+
 		fs.appendFile(
 			`${__dirname}/empty.csv`,
 			[
-				"0", 
+				timestamp, 
 				"1", "2", "3", "4", "5",
 				"6", "7", "8", "9", "10",
 				"11", "12", "13", "14", "15"
