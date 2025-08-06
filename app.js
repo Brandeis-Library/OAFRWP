@@ -10,8 +10,150 @@ const __dirname = new URL(".", import.meta.url).pathname
 const __filename = 'empty.csv'
 const __budgetFileName = 'budget.csv'
 import os from 'os'
+import axios from 'axios'
 
+//Approves one specific line
+//query goes like
+// [PUT] /approve/2025-08-06T18:47:06.370Z
+//timestamp param is mandatory
+app.put('/approve/:timestamp', (req, res) => {
 
+    new Promise((resolve, reject) => {
+
+        fs.copyFileSync(`${__dirname}/${__filename}`, `${__dirname}/tmp.csv`)
+    
+        let timestamp = undefined
+        if (req.params.timestamp) { timestamp = req.params.timestamp } else { reject() }
+
+        let email = undefined			//author email
+		let title = undefined			//title of article
+		let amount = undefined			//amount requested from the fund
+		let author = undefined			//name of the author
+		let authorORCiD = undefined		//ORCiD of the author
+		let collab = undefined			//name of the collaborating author(s) //THIS COULD BE A LIST OF PEOPLE
+		let collabORCiD = undefined		//ORCiD of the collaborating author(s) //OPTIONAL
+		let journal = undefined			//name of the journal the article was submitted to
+		let journalISSN = undefined		//ISSN of the journal
+		let publisher = undefined		//name of the publisher
+		let status = undefined			//????
+		let type = undefined			//publication type (research article, cover image, open access book, article commentary, review article, rapid communication, or OTHERS)
+		let DOI = undefined				//DOI //OPTIONAL
+		let comment = undefined	        //comment to the library publishing team
+        let OAstatus = 'APPROVED'       //ARPROVED, PAID, CANCELLED, TRANSACTIONS PLANNED
+
+        fs.readFile(`${__dirname}/${__budgetFileName}`, 'utf8', (err, data) => {
+
+            if (err) { reject() }
+
+            const lines = data.trim().split(os.EOL)
+
+            if (lines.length == 1) {
+
+                reject()
+
+            }
+
+            let file = []
+
+            for (const i of lines) {
+                file.push(i.split(","))
+            }
+
+            let edit = false
+
+            for (let i = 1; i < file.length; i ++) {
+
+                if (file[i][0] === timestamp) {
+
+                    edit = true;
+
+                    email = file[i][1]
+                    title = file[i][2]
+                    amount = file[i][3]
+                    author = file[i][4]
+                    authorORCiD = file[i][5]
+                    collab = file[i][6]
+                    collabORCiD = file[i][7]
+                    journal = file[i][8]
+                    journalISSN = file[i][9]
+                    publisher = file[i][10]
+                    status = file[i][11]
+                    type = file[i][12]
+                    DOI = file[i][13]
+                    comment = file[i][14]
+
+                    file[i] = [
+                        timestamp,
+                        email,
+                        title,
+                        amount,
+                        author,
+                        authorORCiD,
+                        collab,
+                        collabORCiD,
+                        journal,
+                        journalISSN,
+                        publisher,
+                        status,
+                        type,
+                        DOI,
+                        comment,
+                        OAstatus
+                    ]
+                    
+                }
+
+            }
+
+            if (edit) {
+
+                let output = []
+
+                for (const i of file) {
+
+                    output.push(i.join(","))
+
+                }
+
+                fs.writeFile(`${__dirname}/${__filename}`, output.join(os.EOL), (err) => {
+
+                if (err) { reject() }
+
+                resolve()
+
+            })
+
+            } else {
+
+                reject()
+
+            }
+
+        })
+
+    }).then(() => {
+
+        try {
+        
+            axios.put(`http://localhost:${port}/updateBudget/-${amount}`) //Once updated, its sends query to itself for budget update.
+        
+            res.status(200).send(200)
+
+        } catch (error) {
+
+            res.status(400).send(error)
+
+        }
+
+    }, () => {
+
+        fs.copyFileSync(`${__dirname}/tmp.csv`,`${__dirname}/${__filename}`)
+
+        res.status(400).send(400)
+
+    })
+
+})
 
 //updates budget with specific amount (+ or -)
 //query goes like this
@@ -22,7 +164,7 @@ app.put('/updateBudget/:amount', (req, res) => {
 
     new Promise((resolve, reject) => {
 
-        let date_time = new Date();
+        let date_time = new Date()
         const timestamp = date_time.toISOString()
 
         let totalAmount = undefined
@@ -170,7 +312,7 @@ app.put('/update/:timestamp', (req, res) => {
 
 			let edit = false
 
-			for (let i = 0; i < file.length; i ++) {
+			for (let i = 1; i < file.length; i ++) {
 
 				// console.log(file[i])
 
@@ -413,7 +555,7 @@ app.get('/fetch', (req, res) => {
 
 })
 
-//Fetching Budgets as JSON
+//Fetching budget record as JSON
 app.get('/fetchBudget', (req, res) => {
 
 	new Promise((resolve, reject) => {
