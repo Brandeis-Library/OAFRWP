@@ -12,6 +12,59 @@ const __budgetFileName = 'budget.csv'
 import os from 'os'
 import axios from 'axios'
 
+//Settings for web views
+import path from 'path'
+
+app.set('view engine', 'ejs')
+app.set('views', path.join(__dirname, 'views')) 
+
+app.get('/', (req, res) => {
+
+    res.render('index', {title: 'asdf', message: 'hello world'})
+
+})
+
+app.get('/success', (req, res) => {
+
+    res.render('success', {title: 'success', message: 'hello world'})
+
+})
+
+app.get('/fail', (req, res) => {
+
+    res.render('fail', {title: 'fail', message: 'fail'})
+
+})
+
+/*
+//settings for sending emails
+import nodemailer from 'nodemailer'
+
+app.get('/test/email', (req, res) => {
+
+    const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: false,
+        auth: {
+            user
+        }
+    })
+
+    new Promise(async (resolve, reject) => {
+
+        
+
+    })
+
+})
+*/
+
+//updates the status of request to CANCELLED
+//this adds the budged requested back to the total budget
+//query goes like this
+// /cancel/2025-08-06T18:47:06.370Z
+//timestamp param is mandatory
 app.put('/cancel/:timestamp', (req, res) => {
 
 	new Promise((resolve, reject) => {
@@ -686,20 +739,20 @@ app.post('/create', (req, res) => {
 
 		let OAstatus = "submitted"
 
-		if (req.query.email) { email = req.query.email }
-		if (req.query.title) { title = req.query.title }
-		if (req.query.amount) { amount = req.query.amount }
-		if (req.query.author) { author = req.query.author }
-		if (req.query.authorORCiD) { authorORCiD = req.query.authorORCiD }
-		if (req.query.collab) { collab = req.query.collab }
-		if (req.query.collabORCiD) { collabORCiD = req.query.collabORCiD }
-		if (req.query.journal) { journal = req.query.journal }
-		if (req.query.journalISSN) { journalISSN = req.query.journalISSN }
-		if (req.query.publisher) { publisher = req.query.publisher }
-		if (req.query.status) { status = req.query.status }
-		if (req.query.type) { type = req.query.type }
-		if (req.query.DOI) { DOI = req.query.DOI }
-		if (req.query.comment) { comment = req.query.comment }
+		if (req.query.email) { email = req.query.email.replace(",",".") }
+		if (req.query.title) { title = req.query.title.replace(",",".") }
+		if (req.query.amount) { amount = req.query.amount.replace(",",".") }
+		if (req.query.author) { author = req.query.author.replace(",",".") }
+		if (req.query.authorORCiD) { authorORCiD = String(req.query.authorORCiD).replace(",",".") }
+		if (req.query.collab) { collab = req.query.collab.replace(",",".") }
+		if (req.query.collabORCiD) { collabORCiD = String(req.query.collabORCiD).replace(",",".") }
+		if (req.query.journal) { journal = req.query.journal.replace(",",".") }
+		if (req.query.journalISSN) { journalISSN = String(req.query.journalISSN).replace(",",".") }
+		if (req.query.publisher) { publisher = req.query.publisher.replace(",",".") }
+		if (req.query.status) { status = req.query.status.replace(",",".") }
+		if (req.query.type) { type = req.query.type.replace(",",".") }
+		if (req.query.DOI) { DOI = String(req.query.DOI).replace(",",".") }
+		if (req.query.comment) { comment = req.query.comment.replace(",",".") }
 
 		const input = [
 			timestamp,

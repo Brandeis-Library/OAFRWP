@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title><%= typeof pageTitle !== 'undefined' ? pageTitle : 'Open Access Fund Request' %></title>
+  <style>
+    :root { --radius: 16px; --gap: 12px; }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: #fff; /* white background */
+      color: #111;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      line-height: 1.45;
+    }
+    .wrapper {
+      min-height: 100vh;
+      display: grid;
+      place-items: center; /* centers the form */
+      padding: 24px;
+    }
+    .card {
+      width: min(820px, 100%);
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: var(--radius);
+      box-shadow: 0 1px 6px rgba(0,0,0,.06);
+      padding: 28px;
+      text-align: center; /* center headings and helper text */
+    }
+    h1 { margin: 0 0 8px; font-size: 1.5rem; }
+    .note { margin: 0 0 20px; color: #555; font-size: .95rem; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--gap);
+      text-align: left; /* keep labels/controls readable */
+    }
+    label { display: grid; gap: 6px; font-weight: 600; }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      font: inherit;
+      background: #fff;
+    }
+
+    .submit {
+      margin-top: 14px;
+      width: 100%;
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 999px;
+      background: #111;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .submit:hover { opacity: .9; }
+
+    #status { display:block; margin-top: 10px; font-size: .95rem; color: #333; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <form id="recordForm" class="card" aria-describedby="formNote">
+      <h1>Record Submission</h1>
+      <p id="formNote" class="note">Please fill in the fields below and press Submit.</p>
+
+      <div class="grid">
+        <label>Email
+          <input type="email" name="Email" placeholder="you@brandeis.edu" />
+        </label>
+
+        <label>Title
+          <input type="text" name="Title" placeholder="Title of the article" />
+        </label>
+
+        <label>Amount
+          <input type="number" name="Amount" step="any" min="0" placeholder="000" />
+        </label>
+
+        <label>Author
+          <input type="text" name="Author" placeholder="Primary author" />
+        </label>
+
+        <label>Author ORCiD
+          <input type="text" name="Author ORCiD" pattern="(\d{4}-){3}\d{3}[\dX]" placeholder="0000-0000-0000-0000" />
+        </label>
+
+        <label>Collaborator(s)
+          <input type="text" name="Collab" placeholder="Collaborator(s)" />
+        </label>
+
+        <label>Collaborator(s) ORCiD(s)
+          <input type="text" name="Collab ORCiD" placeholder="0000-0000-0000-0000" />
+        </label>
+
+        <label>Journal
+          <input type="text" name="Journal" placeholder="Journal name" />
+        </label>
+
+        <label>Journal ISSN
+          <input type="text" name="Journal ISSN" pattern="^\d{4}-\d{3}[\dxX]$" placeholder="1234-567X" />
+        </label>
+
+        <label>Publisher
+          <input type="text" name="Publisher" placeholder="Publisher name" />
+        </label>
+
+        <label>Status
+          <input type="text" name="Status" placeholder="e.g., submitted, accepted" />
+        </label>
+
+        <label>Type
+          <input type="text" name="Type" placeholder="e.g., article, review" />
+        </label>
+
+        <label>DOI
+          <input type="text" name="DOI" placeholder="10.xxxx/xxxxx" />
+        </label>
+
+        <label>Comment for the library publishing team
+          <textarea name="Comment" rows="3" placeholder="Any notes or context"></textarea>
+        </label>
+      </div>
+
+      <button type="submit" class="submit">Submit</button>
+      <output id="status" role="status" aria-live="polite"></output>
+    </form>
+  </div>
+
+  <script>
+    (function () {
+      const form = document.getElementById('recordForm');
+      // Base URL for the GET request. Override by passing { actionUrl: 'https://host/create' } to the EJS template
+      const baseUrl = "<%= typeof actionUrl !== 'undefined' ? actionUrl : 'http://localhost:3000/create' %>";
+      const successUrl = "<%= typeof successUrl !== 'undefined' ? successUrl : 'http://localhost:3000/success' %>";
+      const failUrl = "<%= typeof failUrl !== 'undefined' ? failUrl : 'http://localhost:3000/fail' %>";
+      
+
+      // Map verbose form field names to clean query parameter keys
+      const paramMap = {
+        'Email': 'email',
+        'Title': 'title',
+        'Amount': 'amount',
+        'Author': 'author',
+        'Author ORCiD': 'authorORCiD',
+        'Collab': 'collab',
+        'Collab ORCiD': 'collabORCiD',
+        'Journal': 'journal',
+        'Journal ISSN': 'journalISSN',
+        'Publisher': 'publisher',
+        'Status': 'status',
+        'Type': 'type',
+        'DOI': 'DOI',
+        'Comment': 'comment'
+      };
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(form);
+        const params = new URLSearchParams();
+        for (const [name, value] of fd.entries()) {
+          const key = paramMap[name] || name;
+          const v = (typeof value === 'string') ? value.trim() : value;
+          if (v !== '' && v != null) params.append(key, v);
+        }
+        const url = params.toString() ? `${baseUrl}?${params}` : baseUrl;
+
+        try {
+
+            const res = await fetch(url, {method : "POST"});
+
+            if (res.status === 200) { 
+                window.location.href = successUrl
+            } else {
+                throw new Error('HTTP' + res.status)
+            }
+ 
+        } catch (err) {
+
+            window.location.href = failUrl
+
+        }
+        
+      });
+    })();
+  </script>
+</body>
+</html>
