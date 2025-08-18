@@ -1,3 +1,7 @@
+//invoice page - view and upload page
+//login / token feature
+//upload to the server
+
 //Settings for express server
 import express from 'express'
 const app = express()
@@ -14,33 +18,115 @@ import axios from 'axios'
 
 //Settings for web views
 import path from 'path'
-
 app.set('view engine', 'ejs')
 app.set('views', path.join(__dirname, 'views')) 
 
+//settings for uploading files
+import multer from 'multer' //multer is node-js middleware for file-handling
+import { encode } from 'punycode'
+if (!fs.existsSync(path.join(__dirname,'files'))) { //creates /files directory if it does not exist
+	fs.mkdirSync(path.join(__dirname,'files'))
+}
+//MULTER storage settings like default naming
+const storage = multer.diskStorage({
+	destination: (req, file, cb) => cb(null, path.join(__dirname,'files')),
+	filename: (req, file, cb) => {
+		const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+		const safeBase = path.parse(file.originalname).name.replace(/[^À-\u024f\w\- ]+/g, '_').trim().replace(/\s+/g, '_')
+		cb(null, `${safeBase || 'file'}-${timestamp}.pdf`)
+		//saves file as filename-timestamp.pdf or file-timestamp.pdf if filename fails.
+	}
+})
+//MULTER upload settings like filetype check or size limit check
+const upload = multer({
+	storage,
+	fileFilter(req, file, cb) {
+		if(isPDF(file)) return cb(null, true)
+		cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'only pdf files are allowed'))
+	},
+	nodlimits: { fileSize: 50 * 1024 * 1024, files: 10 } // up to 10 PDFs, 50MB each
+})
+//checks if file[MULTER] is .pdf
+function isPDF(file) { 
+	const mime = (file.mimetype || '').toLowerCase()
+	return (
+		mime === 'application/pdf' ||
+		mime === 'application/x-pdf' ||
+		mime === 'application/acrobat' ||
+		mime === 'application/nappdf' ||
+		/\.pdf$/i.test(file.originalname)
+	)
+}
+
+//serves all the files at /files
+//TODO: DO I WANT THIS or more complicated for security??
+app.use('/files',
+	express.static(path.join(__dirname,'files'), {
+		index: false,
+		setHeaders(res, filePath) {
+			res.set('Content-Type', 'application/pdf; charset=utf-8');
+			res.set('Content-Disposition', `inline; filename="${path.basename(filePath)}"`);
+		}
+	})
+)
+
+//web view for the request form
 app.get('/', (req, res) => {
 
     res.render('index', {title: 'asdf', message: 'hello world'})
 
 })
 
+//web view for successful request submissions
 app.get('/success', (req, res) => {
 
     res.render('success', {title: 'success', message: 'hello world'})
 
 })
 
+//web view for failed request submissions
 app.get('/fail', (req, res) => {
 
     res.render('fail', {title: 'fail', message: 'fail'})
 
 })
 
+//web view to view all the requests
 app.get('/requests', (req, res) => {
 
     res.render('requests', {title: 'requests', message: 'requests'})
 
 })
+
+//uploading pdf files
+// [POST] /upload with form field name "pdfs" and has limit of 10 pdf files with 50mb filesize limit per file
+app.post('/upload', upload.array('pdfs', 10), (req, res) => {
+
+	const files = (req.files || []).map(f => ({
+		originalName: f.originalName,
+		filename: f.filename,
+		size: f.size,
+		url: `/files/${encodeURIComponent(f.filename)}`
+	}))
+
+	res.status(201).json({ uploaded: files })
+
+})
+
+// Error handling for file uploads
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    const msg =
+      err.code === 'LIMIT_FILE_SIZE'
+        ? 'File too large'
+        : err.code === 'LIMIT_UNEXPECTED_FILE'
+        ? 'Only PDF files are allowed'
+        : err.message;
+    return res.status(400).json({ error: msg, code: err.code });
+  }
+  console.error(err);
+  res.status(500).json({ error: 'Internal server error' });
+});
 
 /*
 //settings for sending emails
