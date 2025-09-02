@@ -40,6 +40,8 @@ import cookieParser from 'cookie-parser'
 import { time } from 'console'
 app.use(cookieParser())
 
+app.set('trust proxy', 1); // if exactly one proxy (Apache) is in front
+
 //MULTER storage settings like default naming
 const storage = multer.diskStorage({
 	destination: (req, file, cb) => cb(null, path.join(__dirname, 'files')),
@@ -215,6 +217,45 @@ app.use((err, req, res, next) => {
 	console.error(err)
 	res.status(500).json({ error: 'Internal server error' })
 })
+
+//method to ensure files are ending with os.EOL
+function ensureCSV(filePath) {
+
+	try {
+
+		const content = fs.readFileSync(filePath, 'utf8')
+	
+		const list = content.split(os.EOL)
+
+		const cols = list[0].split(',').length
+
+		for(let i = 1; i < list.length; i ++) {
+
+			if(list[i].split(',').length > cols) {
+
+				list[i] = list[i].split(',').slice(0, cols).join(',')
+
+			}
+
+		}
+		
+		const newcontent = list.join(os.EOL)
+
+		fs.writeFileSync(filePath, newcontent)
+
+		if(content.length > 0 && content[content.length - 1] !== os.EOL) {
+
+			fs.appendFileSync(filePath, os.EOL)
+
+		}
+
+ 	} catch {
+
+		console.log('asdfasdf')
+
+	}
+
+}
 
 //method to ensure cred file exists.
 async function ensureCredFile() {
@@ -1360,9 +1401,11 @@ app.post('/create', (req, res) => {
 //Fetching records as JSON
 app.get('/fetch', auth, (req, res) => {
 
+	ensureCSV(path.join(__dirname, __filename))
+
 	new Promise((resolve, reject) => {
 
-		fs.readFile(`${__dirname}/empty.csv`, (err, data) => {
+		fs.readFile(path.join(__dirname, __filename), (err, data) => {
 
 			if (err) { reject(err) }
 
@@ -1395,6 +1438,8 @@ app.get('/fetch', auth, (req, res) => {
 
 //Fetching budget record as JSON
 app.get('/fetchBudget', auth, (req, res) => {
+
+	ensureCSV(path.join(__dirname, __budgetFileName))
 
 	new Promise((resolve, reject) => {
 
