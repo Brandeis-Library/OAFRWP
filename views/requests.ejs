@@ -129,16 +129,23 @@
     })();
 
     (function () {
-      const fetchUrl = "<%= typeof fetchUrl !== 'undefined' ? fetchUrl : 'http://localhost:3000/fetch' %>";
-      const fetchBudgetUrl = "<%= typeof fetchBudgetUrl !== 'undefined' ? fetchBudgetUrl : 'http://localhost:3000/fetchBudget' %>";
+      // const fetchUrl = "<%= typeof fetchUrl !== 'undefined' ? fetchUrl : 'http://localhost:3000/fetch' %>";
+      // const fetchBudgetUrl = "<%= typeof fetchBudgetUrl !== 'undefined' ? fetchBudgetUrl : 'http://localhost:3000/fetchBudget' %>";
+      const fetchUrl = "<%= typeof fetchUrl !== 'undefined' ? fetchUrl : 'http://oafund.library.brandeis.edu/fetch' %>";
+      const fetchBudgetUrl = "<%= typeof fetchBudgetUrl !== 'undefined' ? fetchBudgetUrl : 'http://oafund.library.brandeis.edu/fetchBudget' %>";
 
       // Endpoints (no trailing slash). We'll append /:timestamp at runtime.
       const endpoints = {
-        APPROVED: "<%= typeof approveUrl !== 'undefined' ? approveUrl.replace(/\/$/, '') : 'http://localhost:3000/approve' %>",
-        DENIED: "<%= typeof denyUrl !== 'undefined' ? denyUrl.replace(/\/$/, '') : 'http://localhost:3000/deny' %>",
-        CANCELLED: "<%= typeof cancelUrl !== 'undefined' ? cancelUrl.replace(/\/$/, '') : 'http://localhost:3000/cancel' %>",
-        PAID: "<%= typeof paidUrl !== 'undefined' ? paidUrl.replace(/\/$/, '') : 'http://localhost:3000/paid' %>",
-        PAYMENT_PLANNED: "<%= typeof paymentPlannedUrl !== 'undefined' ? paymentPlannedUrl.replace(/\/$/, '') : 'http://localhost:3000/planned' %>"
+        // APPROVED: "<%= typeof approveUrl !== 'undefined' ? approveUrl.replace(/\/$/, '') : 'http://localhost:3000/approve' %>",
+        // DENIED: "<%= typeof denyUrl !== 'undefined' ? denyUrl.replace(/\/$/, '') : 'http://localhost:3000/deny' %>",
+        // CANCELLED: "<%= typeof cancelUrl !== 'undefined' ? cancelUrl.replace(/\/$/, '') : 'http://localhost:3000/cancel' %>",
+        // PAID: "<%= typeof paidUrl !== 'undefined' ? paidUrl.replace(/\/$/, '') : 'http://localhost:3000/paid' %>",
+        // PAYMENT_PLANNED: "<%= typeof paymentPlannedUrl !== 'undefined' ? paymentPlannedUrl.replace(/\/$/, '') : 'http://localhost:3000/planned' %>"
+        APPROVED: "<%= typeof approveUrl !== 'undefined' ? approveUrl.replace(/\/$/, '') : 'http://oafund.library.brandeis.edu/approve' %>",
+        DENIED: "<%= typeof denyUrl !== 'undefined' ? denyUrl.replace(/\/$/, '') : 'http://oafund.library.brandeis.edu/deny' %>",
+        CANCELLED: "<%= typeof cancelUrl !== 'undefined' ? cancelUrl.replace(/\/$/, '') : 'http://oafund.library.brandeis.edu/cancel' %>",
+        PAID: "<%= typeof paidUrl !== 'undefined' ? paidUrl.replace(/\/$/, '') : 'http://oafund.library.brandeis.edu/paid' %>",
+        PAYMENT_PLANNED: "<%= typeof paymentPlannedUrl !== 'undefined' ? paymentPlannedUrl.replace(/\/$/, '') : 'http://oafund.library.brandeis.edu/planned' %>"
       };
 
       const statusEl = document.getElementById('status');

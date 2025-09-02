@@ -40,7 +40,11 @@ import cookieParser from 'cookie-parser'
 import { time } from 'console'
 app.use(cookieParser())
 
+//Settings for apache
 app.set('trust proxy', 1); // if exactly one proxy (Apache) is in front
+
+const LOCAL = 'https://oafund.library.brandeis.edu'
+// const LOCAL = 'localhost:3000'
 
 //MULTER storage settings like default naming
 const storage = multer.diskStorage({
@@ -164,13 +168,13 @@ app.get('/requests', auth, (req, res) => {
 	// res.render('requests', { title: 'requests', message: 'requests' })
 	res.render('requests', {
 		pageTitle: 'OA Requests',
-		fetchUrl: 'http://localhost:3000/fetch',
-		fetchBudgetUrl: 'http://localhost:3000/fetchBudget',
-		approveUrl: 'http://localhost:3000/approve',
-		denyUrl: 'http://localhost:3000/deny',
-		cancelUrl: 'http://localhost:3000/cancel',
-		paidUrl: 'http://localhost:3000/paid',
-		paymentPlannedUrl: 'http://localhost:3000/planned',
+		fetchUrl: 'http://${LOCAL}/fetch',
+		fetchBudgetUrl: 'http://${LOCAL}/fetchBudget',
+		approveUrl: 'http://${LOCAL}/approve',
+		denyUrl: 'http://${LOCAL}/deny',
+		cancelUrl: 'http://${LOCAL}/cancel',
+		paidUrl: 'http://${LOCAL}/paid',
+		paymentPlannedUrl: 'http://${LOCAL}/planned',
 		headerBgUrl: '/public/header.jpg' // serve this or change the path
   });
 

@@ -33,9 +33,13 @@
     <h1>Upload PDF(s)</h1>
     <p class="note">Enter your email and choose one or more PDF files to upload.</p>
 
-    <form id="uploadForm"
+    <!-- <form id="uploadForm"
           action="<%= typeof uploadUrl !== 'undefined' ? uploadUrl : 'http://localhost:3000/upload' %>"
-          method="post" enctype="multipart/form-data" aria-describedby="status">
+          method="post" enctype="multipart/form-data" aria-describedby="status"> -->
+
+      <form id="uploadForm"
+        action="<%= typeof uploadUrl !== 'undefined' ? uploadUrl : 'http://oafund.library.brandeis.edu/upload' %>"
+        method="post" enctype="multipart/form-data" aria-describedby="status">
 
       <div class="row">
         <label for="email" style="font-weight:600; text-align:left;">Email <span aria-hidden="true">*</span></label>
