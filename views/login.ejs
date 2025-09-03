@@ -31,7 +31,7 @@
     <h1>Login</h1>
     <p class="note">Enter your ID and password.</p>
 
-    <!-- <form id="loginForm" action="<%= typeof loginUrl !== 'undefined' ? loginUrl : 'http://localhost:3000/login' %>" method="post" aria-describedby="status"> -->
+    <!-- <form id="loginForm" action="<%= typeof loginUrl !== 'undefined' ? loginUrl : 'https://localhost:3000/login' %>" method="post" aria-describedby="status"> -->
     <form id="loginForm" action="<%= typeof loginUrl !== 'undefined' ? loginUrl : 'https://oafund.library.brandeis.edu/login' %>" method="post" aria-describedby="status">
       <div class="row">
         <label for="userId" style="font-weight:600; text-align:left;">ID</label>
@@ -50,7 +50,7 @@
     (function () {
       const form = document.getElementById('loginForm');
       const statusEl = document.getElementById('status');
-      // const defaultNext = "<%= typeof nextUrl !== 'undefined' ? nextUrl : 'http://localhost:3000/requests' %>";
+      // const defaultNext = "<%= typeof nextUrl !== 'undefined' ? nextUrl : 'https://localhost:3000/requests' %>";
       const defaultNext = "<%= typeof nextUrl !== 'undefined' ? nextUrl : 'https://oafund.library.brandeis.edu/requests' %>";
       const nextFromQuery = new URLSearchParams(location.search).get('next');
       const nextUrl = nextFromQuery || defaultNext;

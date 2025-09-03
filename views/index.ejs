@@ -139,12 +139,12 @@
     (function () {
       const form = document.getElementById('recordForm');
       // Base URL for the GET request. Override by passing { actionUrl: 'https://host/create' } to the EJS template
-      // const baseUrl = "<%= typeof actionUrl !== 'undefined' ? actionUrl : 'http://localhost:3000/create' %>";
-      // const successUrl = "<%= typeof successUrl !== 'undefined' ? successUrl : 'http://localhost:3000/success' %>";
-      // const failUrl = "<%= typeof failUrl !== 'undefined' ? failUrl : 'http://localhost:3000/fail' %>";
-      const baseUrl = "<%= typeof actionUrl !== 'undefined' ? actionUrl : 'http://oafund.library.brandeis.edu/create' %>";
-      const successUrl = "<%= typeof successUrl !== 'undefined' ? successUrl : 'http://oafund.library.brandeis.edu/success' %>";
-      const failUrl = "<%= typeof failUrl !== 'undefined' ? failUrl : 'http://oafund.library.brandeis.edu/fail' %>";
+      // const baseUrl = "<%= typeof actionUrl !== 'undefined' ? actionUrl : 'https://localhost:3000/create' %>";
+      // const successUrl = "<%= typeof successUrl !== 'undefined' ? successUrl : 'https://localhost:3000/success' %>";
+      // const failUrl = "<%= typeof failUrl !== 'undefined' ? failUrl : 'https://localhost:3000/fail' %>";
+      const baseUrl = "<%= typeof actionUrl !== 'undefined' ? actionUrl : 'https://oafund.library.brandeis.edu/create' %>";
+      const successUrl = "<%= typeof successUrl !== 'undefined' ? successUrl : 'https://oafund.library.brandeis.edu/success' %>";
+      const failUrl = "<%= typeof failUrl !== 'undefined' ? failUrl : 'https://oafund.library.brandeis.edu/fail' %>";
       
 
       // Map verbose form field names to clean query parameter keys
