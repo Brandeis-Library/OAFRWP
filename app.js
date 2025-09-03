@@ -43,7 +43,7 @@ app.use(cookieParser())
 //Settings for apache
 app.set('trust proxy', 1); // if exactly one proxy (Apache) is in front
 
-const LOCAL = 'https://oafund.library.brandeis.edu'
+const LOCAL = 'oafund.library.brandeis.edu'
 // const LOCAL = 'localhost:3000'
 
 //MULTER storage settings like default naming
@@ -168,13 +168,13 @@ app.get('/requests', auth, (req, res) => {
 	// res.render('requests', { title: 'requests', message: 'requests' })
 	res.render('requests', {
 		pageTitle: 'OA Requests',
-		fetchUrl: `http://${LOCAL}/fetch`,
-		fetchBudgetUrl: `http://${LOCAL}/fetchBudget`,
-		approveUrl: `http://${LOCAL}/approve`,
-		denyUrl: `http://${LOCAL}/deny`,
-		cancelUrl: `http://${LOCAL}/cancel`,
-		paidUrl: `http://${LOCAL}/paid`,
-		paymentPlannedUrl: `http://${LOCAL}/planned`,
+		fetchUrl: `https://${LOCAL}/fetch`,
+		fetchBudgetUrl: `https://${LOCAL}/fetchBudget`,
+		approveUrl: `https://${LOCAL}/approve`,
+		denyUrl: `https://${LOCAL}/deny`,
+		cancelUrl: `https://${LOCAL}/cancel`,
+		paidUrl: `https://${LOCAL}/paid`,
+		paymentPlannedUrl: `https://${LOCAL}/planned`,
 		headerBgUrl: `/public/header.jpg`// serve this or change the path
   });
 
