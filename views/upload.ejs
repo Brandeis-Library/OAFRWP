@@ -719,7 +719,7 @@
             const headers = { 'Accept': 'application/json; charset=utf-8' };
             if (bearerToken) headers['Authorization'] = `Bearer ${bearerToken}`;
 
-            response = await fetch('http://localhost:3000/upload', { 
+            response = await fetch('<%= endPoint %>/upload', { 
               method: 'POST', 
               body: fd, 
               headers 
@@ -737,7 +737,7 @@
             };
             if (bearerToken) headers['Authorization'] = `Bearer ${bearerToken}`;
 
-            response = await fetch('http://localhost:3000/uploadURL', { 
+            response = await fetch('<%= endPoint %>/uploadURL', { 
               method: 'POST', 
               headers,
               body: JSON.stringify(payload)

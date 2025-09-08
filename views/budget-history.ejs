@@ -137,7 +137,7 @@
     })();
 
     (function () {
-      const fetchBudgetUrl = "<%= typeof fetchBudgetUrl !== 'undefined' ? fetchBudgetUrl : 'http://localhost:3000/fetchBudget' %>";
+      const fetchBudgetUrl = "<%= typeof fetchBudgetUrl !== 'undefined' ? fetchBudgetUrl : endPoint + '/fetchBudget' %>";
     //   const fetchBudgetUrl = "<%= typeof fetchBudgetUrl !== 'undefined' ? fetchBudgetUrl : 'https://oafund.library.brandeis.edu/fetchBudget' %>";
 
       const statusEl = document.getElementById('status');

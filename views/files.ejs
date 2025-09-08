@@ -165,7 +165,7 @@
         // Fetch both files and URLs in parallel
         const [filesResponse, urlsResponse] = await Promise.all([
           fetch('<%= fetchFilesUrl %>'),
-          fetch('http://localhost:3000/urls')
+          fetch('<%= endPoint %>/urls')
         ]);
 
         if (!filesResponse.ok) {

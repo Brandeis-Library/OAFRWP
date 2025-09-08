@@ -155,7 +155,9 @@ app.use('/files', auth, filesRouter)
 //web view for the request form
 app.get('/', (req, res) => {
 
-	res.render('index')
+	res.render('index', {
+		endPoint : LOCAL
+	})
 
 })
 
@@ -178,6 +180,7 @@ app.get('/requests', auth, (req, res) => {
 
 	// res.render('requests', { title: 'requests', message: 'requests' })
 	res.render('requests', {
+		endPoint : LOCAL,
 		pageTitle: 'OA Requests',
 		fetchUrl: `${LOCAL}/fetch`,
 		fetchBudgetUrl: `${LOCAL}/fetchBudget`,
@@ -194,6 +197,7 @@ app.get('/requests', auth, (req, res) => {
 //web view to view budget history
 app.get('/budget-history', auth, (req, res) => {
 	res.render('budget-history', {
+		endPoint: LOCAL,
 		pageTitle: 'Budget History',
 		fetchBudgetUrl: `${LOCAL}/fetchBudget`,
 		headerBgUrl: `/public/header.jpg`// serve this or change the path
@@ -203,6 +207,7 @@ app.get('/budget-history', auth, (req, res) => {
 //web view to view all uploaded files
 app.get('/files-page', auth, (req, res) => {
 	res.render('files', {
+		endPoint: LOCAL,
 		pageTitle: 'Uploaded Files',
 		fetchFilesUrl: `${LOCAL}/files`,
 		headerBgUrl: `/public/header.jpg`// serve this or change the path
@@ -211,13 +216,13 @@ app.get('/files-page', auth, (req, res) => {
 
 app.get('/upload', (req, res) => {
 
-	res.render('upload', { title: 'upload', message: 'upload pdf' })
+	res.render('upload', { endPoint: LOCAL })
 
 })
 
 app.get('/login', (req, res) => {
 
-	res.render('login')
+	res.render('login', { endPoint: LOCAL })
 
 })
 
