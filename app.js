@@ -571,29 +571,50 @@ app.post('/register', async (req, res) => {
 
 
 //SMTP CODES
-/*
+
 //settings for sending emails
 import nodemailer from 'nodemailer'
 
 app.get('/test/email', (req, res) => {
 
 	const transporter = nodemailer.createTransport({
-		host: "smtp.gmail.com",
-		port: 465,
+		host: "127.0.0.1",
+		port: 25,
 		secure: false,
-		auth: {
-			user
-		}
+		tls: { rejectUnauthorized: false },
+		name: "localhost"
 	})
+	
+	const from = "no-reply@oafund.library.brandeis.edu"
+	const to = "superjames19@brandeis.edu"
+	const subject = "Test Email"
+	const text = "This is a test email"
+	const html = "<p>This is a test email</p>"
 
 	new Promise(async (resolve, reject) => {
 
-	    
+		const info = await transport.sendMail({
+			from: from || "no-reply@example.com",
+			to,
+			subject,
+			text,
+			html
+		});
+			
+		if (info.messageId) {
+			resolve(info)
+		} else {
+			reject(info)
+		}
 
+	}).then(() => {
+		res.json({ ok: true, messageId: info.messageId });
+	}).catch((err) => {
+		res.json({ ok: false, messageId: err.messageId });
 	})
 
 })
-*/
+
 
 function backupBudget() {
 
