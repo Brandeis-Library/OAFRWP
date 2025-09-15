@@ -2,3 +2,10 @@
 .env
 /files
 cred.csv
+budget.csv
+budget.csv_backup.csv
+empty.csv
+empty.csv_backup.csv
+test.csv
+tmp.csv
+urls.csv
