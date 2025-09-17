@@ -596,9 +596,10 @@ function sendEmail(to, subject, html, from) {
 
 // Function to send confirmation email with HTML template
 async function sendConfirmationEmail(recipientEmail, requestId = null) {
+
 	try {
 		// Generate request ID if not provided
-		const finalRequestId = requestId || 'OA-' + Date.now()
+		const finalRequestId = requestId || 'OA-' + new Date().toISOString()
 		
 		// Render the confirmation EJS template
 		const confirmationHtml = await new Promise((resolve, reject) => {
@@ -626,6 +627,129 @@ async function sendConfirmationEmail(recipientEmail, requestId = null) {
 		return { success: false, error: error.message }
 	}
 }
+
+// Function to send application update email
+async function sendApplicationUpdateEmail(recipientEmail, requestId, status, additionalInfo = {}) {
+	try {
+		// Status configuration
+		const statusConfig = {
+			'APPROVED': {
+				subject: "Open Access Fund Request Approved",
+				message: "Congratulations! Your request has been approved.",
+				description: "Your Open Access Fund request has been reviewed and approved by our library publishing team.",
+				icon: "✓",
+				class: "approved",
+				nextSteps: [
+					"Funding will be processed according to your publication timeline",
+					"You will receive payment details via email within 2-3 business days",
+					"Please proceed with your publication as planned",
+					"Keep all receipts and documentation for your records"
+				]
+			},
+			'DENIED': {
+				subject: "Open Access Fund Request Update",
+				message: "Your request requires additional information.",
+				description: "After reviewing your Open Access Fund request, we need some additional information before we can proceed.",
+				icon: "!",
+				class: "denied",
+				nextSteps: [
+					"Please review the feedback provided below",
+					"Submit the requested information or documentation",
+					"Contact us if you have any questions about the requirements",
+					"You may resubmit your request once the issues are addressed"
+				]
+			},
+			'PAID': {
+				subject: "Open Access Fund Payment Processed",
+				message: "Payment has been processed successfully.",
+				description: "Your Open Access Fund payment has been processed and sent to the publisher.",
+				icon: "✓",
+				class: "paid",
+				nextSteps: [
+					"Your publication should now be available as open access",
+					"Please verify the open access status with your publisher",
+					"Keep all payment confirmations for your records",
+					"Contact us if you have any issues with the publication"
+				]
+			},
+			'PAYMENT_PLANNED': {
+				subject: "Open Access Fund Payment Scheduled",
+				message: "Payment has been scheduled for processing.",
+				description: "Your Open Access Fund payment has been approved and scheduled for processing.",
+				icon: "⏰",
+				class: "payment-planned",
+				nextSteps: [
+					"Payment will be processed within 5-7 business days",
+					"You will receive a confirmation once payment is sent",
+					"Please coordinate with your publisher regarding timing",
+					"Contact us if you need to adjust the payment schedule"
+				]
+			},
+			'CANCELLED': {
+				subject: "Open Access Fund Request Cancelled",
+				message: "Your request has been cancelled.",
+				description: "Your Open Access Fund request has been cancelled as requested.",
+				icon: "✕",
+				class: "cancelled",
+				nextSteps: [
+					"No further action is required on your part",
+					"You may submit a new request in the future if needed",
+					"Contact us if you have any questions about this cancellation",
+					"Thank you for using the Open Access Fund service"
+				]
+			}
+		}
+
+		// Get configuration for status or use default
+		const config = statusConfig[status.toUpperCase()] || {
+			subject: "Open Access Fund Request Update",
+			message: "Your request status has been updated.",
+			description: "There has been an update to your Open Access Fund request.",
+			icon: "ℹ",
+			class: "default",
+			nextSteps: [
+				"Please review the details below",
+				"Contact us if you have any questions",
+				"Continue to monitor your request status",
+				"Thank you for your patience"
+			]
+		}
+
+		// Render the EJS template
+		const updateHtml = await new Promise((resolve, reject) => {
+			app.render('application-update', {
+				subject: config.subject,
+				statusMessage: config.message,
+				statusDescription: config.description,
+				statusIcon: config.icon,
+				statusClass: config.class,
+				requestId: requestId,
+				status: status,
+				additionalInfo: additionalInfo,
+				nextSteps: config.nextSteps
+			}, (err, html) => {
+				if (err) reject(err)
+				else resolve(html)
+			})
+		})
+
+		// Send the email
+		await TRANSPORTER.sendMail({
+			from: "no-reply@oafund.library.brandeis.edu",
+			to: recipientEmail,
+			subject: config.subject,
+			html: updateHtml
+		})
+
+		console.log(`Application update email sent successfully to ${recipientEmail} for request ${requestId} with status ${status}`)
+		return { success: true, status: status }
+	} catch (error) {
+		console.error('Error sending application update email:', error)
+		return { success: false, error: error.message }
+	}
+}
+
+
 
 function backupBudget() {
 
@@ -1526,39 +1650,73 @@ app.get('/fetchBudget', auth, (req, res) => {
 
 })
 
-app.get('/test/email', (req, res) => {
+// app.get('/test/email', (req, res) => {
 
-	sendEmail(
-		"superjames19@brandeis.edu", 
-		"Test Email", 
-		"<p>This is a test email</p>",
-		"no-reply@oafund.library.brandeis.edu"
-	)
+// 	sendEmail(
+// 		"superjames19@brandeis.edu", 
+// 		"Test Email", 
+// 		"<p>This is a test email</p>",
+// 		"no-reply@oafund.library.brandeis.edu"
+// 	)
 
-})
+// })
 
 // Test endpoint for confirmation email
-app.get('/test/confirmation-email', async (req, res) => {
+// app.get('/test/confirmation-email', async (req, res) => {
+// 	const recipientEmail = req.query.email || "superjames19@brandeis.edu"
+// 	const requestId = req.query.requestId || null
+	
+// 	try {
+// 		const result = await sendConfirmationEmail(recipientEmail, requestId)
+// 		if (result.success) {
+// 			res.json({ 
+// 				message: 'Confirmation email sent successfully', 
+// 				requestId: result.requestId,
+// 				recipient: recipientEmail
+// 			})
+// 		} else {
+// 			res.status(500).json({ 
+// 				error: 'Failed to send confirmation email', 
+// 				details: result.error 
+// 			})
+// 		}
+// 	} catch (error) {
+// 		res.status(500).json({ 
+// 			error: 'Failed to send confirmation email', 
+// 			details: error.message 
+// 		})
+// 	}
+// })
+
+// Test endpoint for application update email
+app.get('/test/update-email', async (req, res) => {
 	const recipientEmail = req.query.email || "superjames19@brandeis.edu"
-	const requestId = req.query.requestId || null
+	const requestId = req.query.requestId || "OA-TEST-12345"
+	const status = req.query.status || "APPROVED"
+	const additionalInfo = {
+		title: req.query.title || "Sample Research Article",
+		amount: req.query.amount || "1500.00",
+		feedback: req.query.feedback || null
+	}
 	
 	try {
-		const result = await sendConfirmationEmail(recipientEmail, requestId)
+		const result = await sendApplicationUpdateEmail(recipientEmail, requestId, status, additionalInfo)
 		if (result.success) {
 			res.json({ 
-				message: 'Confirmation email sent successfully', 
-				requestId: result.requestId,
+				message: 'Application update email sent successfully', 
+				requestId: requestId,
+				status: status,
 				recipient: recipientEmail
 			})
 		} else {
 			res.status(500).json({ 
-				error: 'Failed to send confirmation email', 
+				error: 'Failed to send application update email', 
 				details: result.error 
 			})
 		}
 	} catch (error) {
 		res.status(500).json({ 
-			error: 'Failed to send confirmation email', 
+			error: 'Failed to send application update email', 
 			details: error.message 
 		})
 	}

@@ -9,11 +9,9 @@
   <style>
     :root { 
       --radius: 16px; 
-      --gap: 12px; 
       --brandeis-blue: #123374;
       --brandeis-light-blue: #4a90e2;
       --brandeis-gray: #666;
-      --brandeis-light-gray: #f8f9fa;
       --success-green: #28a745;
     }
     * { box-sizing: border-box; }
@@ -25,136 +23,25 @@
       font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
       line-height: 1.6;
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       min-height: 100vh;
-    }
-
-    /* Brandeis Header */
-    .brandeis-header {
-      background: var(--brandeis-blue);
-      color: white;
-      padding: 0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .header-top {
-      background: #0f2a5f;
-      padding: 8px 0;
-      font-size: 0.85rem;
-    }
-    .header-top .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 20px;
-      text-align: right;
-    }
-    .header-top a {
-      color: #ccc;
-      text-decoration: none;
-      margin-left: 20px;
-    }
-    .header-top a:hover {
-      color: white;
-    }
-    .header-main {
-      padding: 15px 0;
-    }
-    .header-main .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .brandeis-logo {
-      display: flex;
-      align-items: center;
-      font-size: 1.4rem;
-      font-weight: bold;
-      color: white;
-      text-decoration: none;
-    }
-    .header-nav ul {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      gap: 30px;
-    }
-    .header-nav a {
-      color: white;
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.2s;
-    }
-    .header-nav a:hover {
-      color: #ccc;
-    }
-
-    /* Breadcrumb */
-    .breadcrumb {
-      background: var(--brandeis-light-gray);
-      padding: 12px 0;
-      border-bottom: 1px solid #e0e0e0;
-    }
-    .breadcrumb .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 20px;
-    }
-    .breadcrumb-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 15px;
-    }
-    .breadcrumb-nav {
-      font-size: 0.9rem;
-      color: var(--brandeis-gray);
-    }
-    .breadcrumb-nav a {
-      color: var(--brandeis-blue);
-      text-decoration: none;
-    }
-    .breadcrumb-nav a:hover {
-      text-decoration: underline;
-    }
-    .page-nav-buttons {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .page-nav-btn {
-      display: inline-flex;
-      align-items: center;
-      padding: 6px 12px;
-      background: white;
-      color: var(--brandeis-blue);
-      text-decoration: none;
-      border-radius: 6px;
-      border: 1px solid #dee2e6;
-      font-weight: 500;
-      font-size: 0.85rem;
-      transition: all 0.2s;
-    }
-    .page-nav-btn:hover {
-      background: var(--brandeis-blue);
-      color: white;
-      border-color: var(--brandeis-blue);
+      padding: 20px;
     }
 
     /* Main Content */
     .main-content {
-      flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 40px 20px;
       background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0,0,0,.08);
+      width: min(820px, 100%);
     }
     .card {
-      width: min(820px, 100%);
+      width: 100%;
       background: #fff;
       border: 1px solid #ddd;
       border-radius: var(--radius);
@@ -255,73 +142,13 @@
       color: white;
     }
 
-    /* Footer */
-    .brandeis-footer {
-      background: var(--brandeis-blue);
-      color: white;
-      padding: 40px 0 20px;
-      margin-top: auto;
-    }
-    .footer-content {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 20px;
-    }
-    .footer-main {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 40px;
-      margin-bottom: 30px;
-    }
-    .footer-section h3 {
-      margin: 0 0 15px;
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-    .footer-section ul {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-    .footer-section ul li {
-      margin-bottom: 8px;
-    }
-    .footer-section a {
-      color: #ccc;
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-    .footer-section a:hover {
-      color: white;
-    }
-    .footer-bottom {
-      border-top: 1px solid #2a4a7f;
-      padding-top: 20px;
-      text-align: center;
-      font-size: 0.9rem;
-      color: #ccc;
-    }
-    .footer-bottom p {
-      margin: 5px 0;
-    }
-
     /* Responsive Design */
     @media (max-width: 768px) {
-      .header-main .container {
-        flex-direction: column;
-        gap: 15px;
-      }
-      .header-nav ul {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 15px;
+      body {
+        padding: 10px;
       }
       .card {
         padding: 30px 20px;
-      }
-      .footer-main {
-        grid-template-columns: 1fr;
-        gap: 25px;
       }
       .action-buttons {
         flex-direction: column;
@@ -346,7 +173,7 @@
         <h3>What happens next?</h3>
         <p>Thank you for submitting your Open Access Fund request. Here's what you can expect:</p>
         <ul>
-          <li>You will receive a confirmation email shortly with your request details</li>
+          <!-- <li>You will receive a confirmation email shortly with your request details</li> -->
           <li>Our library publishing team will review your request within 3-5 business days</li>
           <li>You will be notified of the decision via email</li>
           <li>If approved, funding will be processed according to your publication timeline</li>

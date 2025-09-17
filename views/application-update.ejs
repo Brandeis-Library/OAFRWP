@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= subject %></title>
+  <style>
+    :root { 
+      --radius: 16px; 
+      --brandeis-blue: #123374;
+      --brandeis-light-blue: #4a90e2;
+      --brandeis-gray: #666;
+      --success-green: #28a745;
+      --warning-orange: #fd7e14;
+      --danger-red: #dc3545;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #f8f9fa;
+      color: #333;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      padding: 20px;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0,0,0,.08);
+      overflow: hidden;
+    }
+    .header {
+      background: var(--brandeis-blue);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      font-weight: 300;
+    }
+    .content {
+      padding: 30px;
+    }
+    .status-icon {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      color: white;
+      font-weight: bold;
+    }
+    .status-approved { background: var(--success-green); }
+    .status-denied { background: var(--danger-red); }
+    .status-paid { background: var(--success-green); }
+    .status-payment-planned { background: var(--warning-orange); }
+    .status-cancelled { background: var(--brandeis-gray); }
+    .status-default { background: var(--brandeis-blue); }
+    
+    .status-message {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--brandeis-blue);
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    .status-description {
+      color: var(--brandeis-gray);
+      margin-bottom: 25px;
+      text-align: center;
+    }
+    .request-info {
+      background: #f8f9fa;
+      border-left: 4px solid var(--brandeis-blue);
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .request-info h3 {
+      margin: 0 0 10px;
+      color: var(--brandeis-blue);
+    }
+    .request-info p {
+      margin: 5px 0;
+    }
+    .next-steps {
+      background: #e7f3ff;
+      border: 1px solid #b3d9ff;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    .next-steps h3 {
+      margin: 0 0 15px;
+      color: var(--brandeis-blue);
+    }
+    .next-steps ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .next-steps li {
+      margin-bottom: 8px;
+    }
+    .footer {
+      background: var(--brandeis-blue);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    .footer a {
+      color: #ccc;
+      text-decoration: none;
+    }
+    .footer a:hover {
+      color: white;
+    }
+    @media (max-width: 600px) {
+      body { padding: 10px; }
+      .content { padding: 20px; }
+      .header { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="header">
+      <h1>Brandeis University Library</h1>
+      <p>Open Access Fund Request Update</p>
+    </div>
+    
+    <div class="content">
+      <div class="status-icon status-<%= statusClass %>">
+        <%= statusIcon %>
+      </div>
+      
+      <div class="status-message"><%= statusMessage %></div>
+      <div class="status-description"><%= statusDescription %></div>
+      
+      <div class="request-info">
+        <h3>Request Details</h3>
+        <p><strong>Request ID:</strong> <%= requestId %></p>
+        <p><strong>Status:</strong> <%= status %></p>
+        <p><strong>Date:</strong> <%= new Date().toLocaleDateString() %></p>
+        <% if (additionalInfo.title) { %>
+          <p><strong>Title:</strong> <%= additionalInfo.title %></p>
+        <% } %>
+        <% if (additionalInfo.amount) { %>
+          <p><strong>Amount:</strong> $<%= additionalInfo.amount %></p>
+        <% } %>
+      </div>
+      
+      <% if (additionalInfo.feedback) { %>
+      <div class="next-steps">
+        <h3>Additional Information</h3>
+        <p><%= additionalInfo.feedback %></p>
+      </div>
+      <% } %>
+      
+      <div class="next-steps">
+        <h3>Next Steps</h3>
+        <ul>
+          <% nextSteps.forEach(function(step) { %>
+            <li><%= step %></li>
+          <% }); %>
+        </ul>
+      </div>
+      
+      <p style="text-align: center; margin-top: 30px;">
+        <a href="https://oafund.library.brandeis.edu" style="color: var(--brandeis-blue); text-decoration: none; font-weight: 600;">View Your Requests</a>
+      </p>
+    </div>
+    
+    <div class="footer">
+      <p>Goldfarb Library | 415 South Street, Waltham, MA 02453</p>
+      <p>
+        <a href="mailto:librarypublishing@brandeis.edu">librarypublishing@brandeis.edu</a> | 
+        <a href="https://www.brandeis.edu/library/">Library Website</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+
