@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title><%= subject %></title>
+  <link rel="icon" type="image/png" href="/public/brandeis.png">
+  <link rel="shortcut icon" type="image/png" href="/public/brandeis.png">
   <style>
     :root { 
       --radius: 16px; 
@@ -15,45 +17,63 @@
       --danger-red: #dc3545;
     }
     * { box-sizing: border-box; }
+    html, body { height: 100%; }
     body {
       margin: 0;
-      background: #f8f9fa;
+      background: #fff;
       color: #333;
       font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
       line-height: 1.6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
       padding: 20px;
     }
-    .email-container {
-      max-width: 600px;
-      margin: 0 auto;
-      background: white;
+
+    /* Main Content */
+    .main-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
       border-radius: var(--radius);
       box-shadow: 0 4px 12px rgba(0,0,0,.08);
-      overflow: hidden;
+      width: min(820px, 100%);
     }
-    .header {
-      background: var(--brandeis-blue);
-      color: white;
-      padding: 30px;
+    .card {
+      width: 100%;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0,0,0,.08);
+      padding: 40px;
       text-align: center;
     }
-    .header h1 {
-      margin: 0;
-      font-size: 1.8rem;
+    .card h1 { 
+      margin: 0 0 8px; 
+      font-size: 2rem; 
+      color: var(--brandeis-blue);
       font-weight: 300;
     }
-    .content {
-      padding: 30px;
+    .card .subtitle {
+      margin: 0 0 30px;
+      color: var(--brandeis-gray);
+      font-size: 1.1rem;
+      font-weight: 300;
     }
+
+    /* Status Icon */
     .status-icon {
-      width: 60px;
-      height: 60px;
-      margin: 0 auto 20px;
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 30px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.8rem;
+      font-size: 2.5rem;
       color: white;
       font-weight: bold;
     }
@@ -63,43 +83,51 @@
     .status-payment-planned { background: var(--warning-orange); }
     .status-cancelled { background: var(--brandeis-gray); }
     .status-default { background: var(--brandeis-blue); }
-    
+
+    /* Status Message */
     .status-message {
       font-size: 1.3rem;
       font-weight: 600;
       color: var(--brandeis-blue);
       margin-bottom: 15px;
-      text-align: center;
     }
     .status-description {
       color: var(--brandeis-gray);
       margin-bottom: 25px;
-      text-align: center;
     }
+
+    /* Request Info */
     .request-info {
-      background: #f8f9fa;
-      border-left: 4px solid var(--brandeis-blue);
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
       padding: 20px;
+      border-radius: 8px;
       margin: 20px 0;
-      border-radius: 4px;
+      text-align: left;
     }
     .request-info h3 {
       margin: 0 0 10px;
-      color: var(--brandeis-blue);
+      color: #155724;
+      font-size: 1.2rem;
     }
     .request-info p {
-      margin: 5px 0;
+      margin: 0 0 10px;
     }
+
+    /* Next Steps */
     .next-steps {
       background: #e7f3ff;
       border: 1px solid #b3d9ff;
       padding: 20px;
       border-radius: 8px;
       margin: 20px 0;
+      text-align: left;
     }
     .next-steps h3 {
       margin: 0 0 15px;
       color: var(--brandeis-blue);
+      font-size: 1.2rem;
     }
     .next-steps ul {
       margin: 0;
@@ -108,41 +136,74 @@
     .next-steps li {
       margin-bottom: 8px;
     }
-    .footer {
+
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-width: 140px;
+      justify-content: center;
+    }
+    .btn-primary {
       background: var(--brandeis-blue);
       color: white;
-      padding: 20px;
-      text-align: center;
-      font-size: 0.9rem;
     }
-    .footer a {
-      color: #ccc;
-      text-decoration: none;
+    .btn-primary:hover {
+      background: var(--brandeis-light-blue);
     }
-    .footer a:hover {
+    .btn-secondary {
+      background: white;
+      color: var(--brandeis-blue);
+      border: 2px solid var(--brandeis-blue);
+    }
+    .btn-secondary:hover {
+      background: var(--brandeis-blue);
       color: white;
     }
-    @media (max-width: 600px) {
-      body { padding: 10px; }
-      .content { padding: 20px; }
-      .header { padding: 20px; }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+      .card {
+        padding: 30px 20px;
+      }
+      .action-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+      .btn {
+        width: 100%;
+        max-width: 300px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="email-container">
-    <div class="header">
-      <h1>Brandeis University Library</h1>
-      <p>Open Access Fund Request Update</p>
-    </div>
-    
-    <div class="content">
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="card">
       <div class="status-icon status-<%= statusClass %>">
         <%= statusIcon %>
       </div>
-      
-      <div class="status-message"><%= statusMessage %></div>
-      <div class="status-description"><%= statusDescription %></div>
+      <h1><%= statusMessage %></h1>
+      <p class="subtitle"><%= statusDescription %></p>
       
       <div class="request-info">
         <h3>Request Details</h3>
@@ -172,20 +233,13 @@
           <% }); %>
         </ul>
       </div>
-      
-      <p style="text-align: center; margin-top: 30px;">
-        <a href="https://oafund.library.brandeis.edu" style="color: var(--brandeis-blue); text-decoration: none; font-weight: 600;">View Your Requests</a>
-      </p>
+
+      <div class="action-buttons">
+        <a href="https://oafund.library.brandeis.edu" class="btn btn-primary">View Your Requests</a>
+        <a href="https://www.brandeis.edu/library/" class="btn btn-secondary">Return to Library</a>
+      </div>
     </div>
-    
-    <div class="footer">
-      <p>Goldfarb Library | 415 South Street, Waltham, MA 02453</p>
-      <p>
-        <a href="mailto:librarypublishing@brandeis.edu">librarypublishing@brandeis.edu</a> | 
-        <a href="https://www.brandeis.edu/library/">Library Website</a>
-      </p>
-    </div>
-  </div>
+  </main>
 </body>
 </html>
 

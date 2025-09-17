@@ -1692,7 +1692,7 @@ app.get('/fetchBudget', auth, (req, res) => {
 app.get('/test/update-email', async (req, res) => {
 	const recipientEmail = req.query.email || "superjames19@brandeis.edu"
 	const requestId = req.query.requestId || "OA-TEST-12345"
-	const status = req.query.status || "APPROVED"
+	const status = req.query.status || "DENIED"
 	const additionalInfo = {
 		title: req.query.title || "Sample Research Article",
 		amount: req.query.amount || "1500.00",
