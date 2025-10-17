@@ -502,38 +502,32 @@ function verifyToken(token, secret) {
 
 //middleware that extracts SSO attributes from request headers
 function extractSSOAttributes(req, res, next) {
-	// Extract SSO attributes from headers set by Apache mod_shib
-	// Based on Apache config: headers are set with X- prefix
+	// Extract SSO attributes from headers (based on actual headers received)
 	const ssoAttributes = {
-		remoteUser: req.get('X-Remote-User'),
-		email: req.get('X-Email'),
-		name: req.get('X-Name'),
-		eppn: req.get('X-Eppn'),
-		givenName: req.get('X-Given-Name'),
-		surname: req.get('X-Surname'),
-		affiliation: req.get('X-Affiliation'),
-		entitlement: req.get('X-Entitlement')
+		email: req.get('eppn'),  // eppn contains the email
+		name: req.get('displayname'),  // displayname contains the full name
+		eppn: req.get('eppn'),
+		affiliation: req.get('affiliation'),
+		cn: req.get('cn'),
+		givenName: req.get('givenname'),
+		surname: req.get('sn'),
+		uid: req.get('uid'),
+		mail: req.get('mail')
 	}
 
-    console.log(req)
-	// Print all request headers for debugging
-	console.log('All request headers:', req.headers);
-
 	// If we have SSO attributes, create a user object
-	if (ssoAttributes.eppn || ssoAttributes.email) {
+	if (ssoAttributes.eppn || ssoAttributes.mail) {
 		req.ssoUser = {
 			email: ssoAttributes.email,
 			name: ssoAttributes.name,
 			eppn: ssoAttributes.eppn,
+			affiliation: ssoAttributes.affiliation,
+			cn: ssoAttributes.cn,
 			givenName: ssoAttributes.givenName,
 			surname: ssoAttributes.surname,
-			remoteUser: ssoAttributes.remoteUser,
-			affiliation: ssoAttributes.affiliation,
-			entitlement: ssoAttributes.entitlement
+			uid: ssoAttributes.uid,
+			mail: ssoAttributes.mail
 		}
-		console.log('SSO User object created:', req.ssoUser);
-	} else {
-		console.log('No SSO attributes found - user not authenticated via SSO');
 	}
 
 	next()
