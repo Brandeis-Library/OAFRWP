@@ -515,17 +515,9 @@ function extractSSOAttributes(req, res, next) {
 		entitlement: req.get('X-Entitlement')
 	}
 
-	// Server-side logging of SSO attributes
-	console.log('SSO Attributes received:', {
-		remoteUser: ssoAttributes.remoteUser,
-		email: ssoAttributes.email,
-		name: ssoAttributes.name,
-		eppn: ssoAttributes.eppn,
-		givenName: ssoAttributes.givenName,
-		surname: ssoAttributes.surname,
-		affiliation: ssoAttributes.affiliation,
-		entitlement: ssoAttributes.entitlement
-	});
+    console.log(req)
+	// Print all request headers for debugging
+	console.log('All request headers:', req.headers);
 
 	// If we have SSO attributes, create a user object
 	if (ssoAttributes.eppn || ssoAttributes.email) {
