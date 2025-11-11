@@ -9,12 +9,15 @@ A comprehensive web application for managing Open Access Fund requests at Brande
 - [Features](#features)
 - [Technology Stack](#technology-stack)
 - [Installation & Setup](#installation--setup)
+- [SQLite Migration Guide](#sqlite-migration-guide)
 - [API Documentation](#api-documentation)
 - [Database Schema](#database-schema)
 - [User Interface](#user-interface)
+- [User Management](#user-management)
 - [Security](#security)
 - [Deployment](#deployment)
 - [Development](#development)
+- [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 
 ## Overview
@@ -46,15 +49,15 @@ The Open Access Funding Request Workflow Project (OAFRWP) is a Node.js-based web
                     └─────────────────┘
                                  │
                     ┌─────────────────┐
-                    │   CSV Storage   │
-                    │   (File-based)  │
+                    │   SQLite DB     │
+                    │   (oafrwp.db)   │
                     └─────────────────┘
 ```
 
 ### Data Flow
 
 1. **Request Submission**: Users submit requests via web form
-2. **Data Storage**: Requests stored in CSV format
+2. **Data Storage**: Requests stored in SQLite database
 3. **Admin Review**: Library staff review requests through admin dashboard
 4. **Status Updates**: Automated email notifications sent on status changes
 5. **Budget Tracking**: Real-time budget calculations and history
@@ -94,7 +97,7 @@ The Open Access Funding Request Workflow Project (OAFRWP) is a Node.js-based web
 - **EJS**: Template engine
 - **Multer**: File upload handling
 - **Nodemailer**: Email service
-- **CSV Parser**: Data processing
+- **SQLite3**: Database
 - **Crypto**: Password hashing and JWT tokens
 
 ### Frontend
@@ -104,7 +107,7 @@ The Open Access Funding Request Workflow Project (OAFRWP) is a Node.js-based web
 - **Brandeis Branding**: University-specific styling
 
 ### Data Storage
-- **CSV Files**: Primary data storage
+- **SQLite Database**: Primary data storage (oafrwp.db)
 - **File System**: Document storage
 - **Environment Variables**: Configuration
 
@@ -112,7 +115,7 @@ The Open Access Funding Request Workflow Project (OAFRWP) is a Node.js-based web
 - **JWT Authentication**: Secure admin access
 - **Password Hashing**: Scrypt-based password security
 - **File Validation**: PDF-only uploads
-- **CSRF Protection**: Request validation
+- **Input Sanitization**: XSS prevention
 - **SSO Integration**: Single sign-on support
 
 ## Installation & Setup
@@ -136,41 +139,178 @@ The Open Access Funding Request Workflow Project (OAFRWP) is a Node.js-based web
    npm install
    ```
 
+   **Note about sqlite3**: The `sqlite3` package uses native bindings. If you encounter build issues:
+   - **macOS**: Install Xcode Command Line Tools: `xcode-select --install`
+   - **Linux**: Install build tools: `sudo apt-get install build-essential python3` (or equivalent)
+   - **Windows**: May need Visual Studio Build Tools
+
 3. **Environment Configuration**
    Create a `.env` file:
    ```env
    TOKEN_SECRET=your-secret-key-here
+   LOCAL_URL=https://oafund.library.brandeis.edu
    NODE_ENV=production
    ```
+   
+   **Environment Variables:**
+   - `TOKEN_SECRET`: Secret key for JWT token signing (required)
+   - `LOCAL_URL`: Base URL for the application (defaults to `https://oafund.library.brandeis.edu` if not set)
+   - `NODE_ENV`: Environment setting (e.g., `production` or `development`)
 
-4. **Initialize Data Files**
-   The application will automatically create required CSV files on first run.
+4. **Initialize Database**
+   If you have existing CSV files, run the migration script:
+   ```bash
+   node migrate.js
+   ```
+
+   Otherwise, the database will be created automatically on first run.
 
 5. **Start the application**
    ```bash
    npm start
    ```
 
+## SQLite Migration Guide
+
+### Quick Start for Local Testing
+
+#### Step 1: Backup Your CSV Files (Recommended)
+```bash
+cp requests.csv requests.csv.backup
+cp budget.csv budget.csv.backup
+cp cred.csv cred.csv.backup
+cp urls.csv urls.csv.backup  # if exists
+```
+
+#### Step 2: Run Migration
+```bash
+node migrate.js
+```
+
+The migration script will:
+- Create `oafrwp.db` SQLite database
+- Create all tables (requests, budget, budget_current, urls, credentials)
+- Import data from:
+  - ✅ `requests.csv`
+  - ✅ `budget.csv`
+  - ✅ `cred.csv` (user credentials)
+  - ✅ `urls.csv` (if exists)
+
+#### Step 3: Test Migration
+```bash
+node test-migration.js
+```
+
+This will verify:
+- Database file exists
+- All tables have data
+- Sample records look correct
+
+#### Step 4: Start Application
+```bash
+npm start
+```
+
+The application will now use SQLite instead of CSV files.
+
+### Verification
+
+#### Check Database Directly (Optional)
+If you have SQLite CLI installed:
+```bash
+sqlite3 oafrwp.db
+
+# Check tables
+.tables
+
+# Count records
+SELECT COUNT(*) FROM requests;
+SELECT COUNT(*) FROM budget;
+SELECT COUNT(*) FROM credentials;
+SELECT * FROM budget_current;
+
+# Exit
+.quit
+```
+
+#### Test API Endpoints
+
+1. **Login** (using migrated credentials):
+   ```bash
+   curl -X POST http://localhost:3000/login \
+     -H "Content-Type: application/json" \
+     -d '{"id":"testuser","pass":"yourpassword"}'
+   ```
+
+2. **Fetch Requests** (requires auth token):
+   ```bash
+   curl -X GET http://localhost:3000/fetch \
+     -H "Authorization: Bearer YOUR_TOKEN"
+   ```
+
+3. **Fetch Budget**:
+   ```bash
+   curl -X GET http://localhost:3000/fetchBudget \
+     -H "Authorization: Bearer YOUR_TOKEN"
+   ```
+
 ### Production Deployment
 
-1. **Server Setup**
-   - Ensure Node.js is installed
-   - Configure reverse proxy (Apache/Nginx)
-   - Set up SSL certificates
-   - Configure SMTP server
+#### 1. Backup Strategy
+- **Before migration**: Backup all CSV files
+- **After migration**: Keep CSV files as backup for 30 days
+- **Database backup**: Regularly backup `oafrwp.db` file
 
-2. **File Permissions**
+#### 2. Deployment Steps
+1. **Stop the application** on production server
+2. **Backup CSV files**:
    ```bash
-   chmod 600 cred.csv
-   chmod 644 *.csv
-   chmod 755 files/
+   cp requests.csv requests.csv.backup.$(date +%Y%m%d)
+   cp budget.csv budget.csv.backup.$(date +%Y%m%d)
+   cp cred.csv cred.csv.backup.$(date +%Y%m%d)
    ```
+3. **Deploy new code** (with SQLite migration)
+4. **Run migration**:
+   ```bash
+   node migrate.js
+   ```
+5. **Verify migration**:
+   ```bash
+   node test-migration.js
+   ```
+6. **Start application**: `npm start`
+7. **Test login** and key functionality
+8. **Monitor** for any issues
 
-3. **Environment Variables**
-   ```bash
-   export TOKEN_SECRET="your-production-secret"
-   export NODE_ENV="production"
-   ```
+#### 3. Database File Permissions
+```bash
+# Set appropriate permissions
+chmod 600 oafrwp.db        # Read/write for owner only
+chmod 644 oafrwp.db-wal    # If WAL mode is enabled
+chmod 644 oafrwp.db-shm    # If WAL mode is enabled
+```
+
+#### 4. Performance Benefits
+- **Faster queries**: Database indexes improve query speed
+- **Better concurrency**: SQLite handles concurrent reads efficiently
+- **Data integrity**: ACID transactions prevent data corruption
+- **Easy backup**: Single file backup (`oafrwp.db`)
+
+#### 5. Rollback Plan (If Needed)
+If you need to rollback:
+1. Stop application
+2. Delete `oafrwp.db`
+3. Restore CSV files from backup
+4. Revert `app.js` to CSV version (from git history)
+5. Restart application
+
+### What's Different After Migration
+
+1. **No more CSV file operations** - All data is in SQLite
+2. **Faster queries** - Database queries are faster than CSV parsing
+3. **Better data integrity** - SQLite provides ACID transactions
+4. **Budget tracking** - New `budget_current` table for quick state lookup
+5. **Credentials in database** - User credentials are now in the database instead of CSV
 
 ## API Documentation
 
@@ -278,48 +418,59 @@ Debug SSO attributes
 
 ## Database Schema
 
-### Requests Table (requests.csv)
+### Requests Table
 | Column | Type | Description |
 |--------|------|-------------|
-| Timestamp | String | ISO timestamp of submission |
-| Email Address | String | Submitter's email |
-| Title of Article | String | Article/chapter title |
-| Amount requested | Number | Funding amount |
-| Corresponding Author Name | String | Primary author |
-| Corresponding Author ORCiD | String | Author's ORCiD |
-| Collaborating Author List | String | Co-authors |
-| Collaborating Author ORCiD List | String | Co-authors' ORCiDs |
-| Title of Journal | String | Journal name |
-| Journal ISSN | String | Journal ISSN |
-| Publisher | String | Publisher name |
-| Article Status | String | Publication status |
-| Publication Type | String | Type of publication |
-| DOI | String | Digital Object Identifier |
-| Comment | String | Additional comments |
-| OA fund status | String | Request status |
+| timestamp | TEXT PRIMARY KEY | ISO timestamp of submission |
+| email_address | TEXT | Submitter's email |
+| title_of_article | TEXT | Article/chapter title |
+| amount_requested | REAL | Funding amount |
+| corresponding_author_name | TEXT | Primary author |
+| corresponding_author_orcid | TEXT | Author's ORCiD |
+| collaborating_author_list | TEXT | Co-authors |
+| collaborating_author_orcid_list | TEXT | Co-authors' ORCiDs |
+| title_of_journal | TEXT | Journal name |
+| journal_issn | TEXT | Journal ISSN |
+| publisher | TEXT | Publisher name |
+| article_status | TEXT | Publication status |
+| publication_type | TEXT | Type of publication |
+| doi | TEXT | Digital Object Identifier |
+| comment | TEXT | Additional comments |
+| oa_fund_status | TEXT | Request status |
 
-### Budget Table (budget.csv)
+### Budget Table (History)
 | Column | Type | Description |
 |--------|------|-------------|
-| Timestamp | String | ISO timestamp of change |
-| Total Amount | Number | Current total budget |
-| Change | Number | Amount changed |
-| Reason | String | Reason for change |
-| RunningTotal | Number | Running total of commitments |
-| RunningTotalChange | Number | Change to running total |
+| id | INTEGER PRIMARY KEY | Auto-increment ID |
+| timestamp | TEXT | ISO timestamp of change |
+| total_amount | REAL | Current total budget |
+| change_amount | REAL | Amount changed |
+| reason | TEXT | Reason for change |
+| running_total | REAL | Running total of commitments |
+| running_total_change | REAL | Change to running total |
 
-### URLs Table (urls.csv)
+### Budget Current Table
 | Column | Type | Description |
 |--------|------|-------------|
-| Timestamp | String | ISO timestamp of submission |
-| URL | String | Submitted URL |
-| Email | String | Submitter's email |
+| id | INTEGER PRIMARY KEY | Always 1 (single row) |
+| total_amount | REAL | Current total budget |
+| running_total | REAL | Current running total |
+| last_updated | TEXT | ISO timestamp of last update |
+| updated_by | TEXT | Optional user who made change |
 
-### Credentials Table (cred.csv)
+### URLs Table
 | Column | Type | Description |
 |--------|------|-------------|
-| id | String | Username |
-| pass_hashed | String | Hashed password |
+| id | INTEGER PRIMARY KEY | Auto-increment ID |
+| timestamp | TEXT | ISO timestamp of submission |
+| url | TEXT | Submitted URL |
+| email | TEXT | Submitter's email |
+
+### Credentials Table
+| Column | Type | Description |
+|--------|------|-------------|
+| id | TEXT PRIMARY KEY | Username |
+| pass_hashed | TEXT | Hashed password |
 
 ## User Interface
 
@@ -388,6 +539,26 @@ Debug SSO attributes
 - **Template**: `application-update.ejs`
 - **Content**: Status-specific messages and next steps
 
+## User Management
+
+The system includes a JavaScript script (`usermanage.js`) for managing admin users:
+
+```bash
+# Add user
+node usermanage.js adduser username:password
+
+# Change password
+node usermanage.js changepass username:newpassword
+
+# Remove user
+node usermanage.js remove username
+
+# List users
+node usermanage.js list
+```
+
+**Note**: User credentials are stored in the SQLite database (`credentials` table), not in CSV files.
+
 ## Security
 
 ### Authentication
@@ -405,7 +576,8 @@ Debug SSO attributes
 - **File Validation**: PDF-only uploads
 - **Email Validation**: Brandeis.edu domain requirement
 - **Input Sanitization**: XSS prevention
-- **CSV Security**: Proper file permissions
+- **Database Security**: Proper file permissions on oafrwp.db
+- **SQL Injection Protection**: Parameterized queries
 
 ### File Security
 - **Upload Limits**: 50MB per file, 10 files max
@@ -426,9 +598,14 @@ Debug SSO attributes
 ```
 OAFRWP/
 ├── app.js                 # Main application file
+├── db.js                  # Database module
+├── migrate.js             # Migration script
+├── test-migration.js      # Migration test script
+├── usermanage.js          # User management script
 ├── package.json           # Dependencies and scripts
 ├── .env                   # Environment variables
 ├── .gitignore            # Git ignore rules
+├── oafrwp.db             # SQLite database
 ├── views/                # EJS templates
 │   ├── index.ejs         # Request form
 │   ├── requests.ejs      # Admin dashboard
@@ -439,16 +616,20 @@ OAFRWP/
 ├── public/               # Static assets
 │   ├── logo.svg
 │   └── brandeis.png
-├── files/                # Uploaded files
-├── *.csv                 # Data files
-└── usermanage.py         # User management script
+└── files/                # Uploaded files
 ```
 
 ### Environment Variables
 ```env
 TOKEN_SECRET=your-secret-key
+LOCAL_URL=https://oafund.library.brandeis.edu
 NODE_ENV=production
 ```
+
+**Environment Variable Details:**
+- `TOKEN_SECRET` (required): Secret key used for signing JWT tokens. Should be a strong, random string.
+- `LOCAL_URL` (optional): Base URL for the application. Used for generating absolute URLs in email templates and API responses. Defaults to `https://oafund.library.brandeis.edu` if not set.
+- `NODE_ENV` (optional): Environment setting. Use `production` for production deployments, `development` for local development.
 
 ### Reverse Proxy Configuration (Apache)
 ```apache
@@ -471,38 +652,60 @@ NODE_ENV=production
 1. **Clone repository**
 2. **Install dependencies**: `npm install`
 3. **Set environment variables**
-4. **Start development server**: `npm start`
-5. **Access application**: `http://localhost:3000`
+4. **Run migration** (if needed): `node migrate.js`
+5. **Start development server**: `npm start`
+6. **Access application**: `http://localhost:3000`
 
 ### Code Structure
 - **app.js**: Main application file with all routes and middleware
+- **db.js**: Database module with SQLite operations
+- **migrate.js**: CSV to SQLite migration script
+- **usermanage.js**: User management CLI tool
 - **views/**: EJS templates for all pages
 - **public/**: Static assets (CSS, images, etc.)
 - **files/**: Uploaded file storage
-- **CSV files**: Data storage
 
 ### Key Functions
 - **Authentication**: JWT token management
 - **File Upload**: Multer configuration
 - **Email Service**: Nodemailer setup
-- **CSV Processing**: Data manipulation
+- **Database Operations**: SQLite queries and transactions
 - **Status Management**: Request workflow
 
-### User Management
-The system includes a Python script (`usermanage.py`) for managing admin users:
-```bash
-# Add user
-python3 usermanage.py adduser username:password
+## Troubleshooting
 
-# Change password
-python3 usermanage.py changepass username:newpassword
+### Migration Issues
 
-# Remove user
-python3 usermanage.py remove username
+#### Issue: "Error: Cannot find module 'sqlite3'"
+**Solution**: Run `npm install` again. If it fails, you may need to install build tools.
 
-# List users
-python3 usermanage.py list
-```
+#### Issue: "Error initializing database"
+**Solution**: Check that you have write permissions in the project directory.
+
+#### Issue: Migration fails on specific CSV rows
+**Solution**: The migration script will log errors for specific rows but continue. Check the console output for details.
+
+#### Issue: Database file created but empty
+**Solution**: Check that your CSV files have the correct headers and data format.
+
+#### Issue: "Database is locked"
+**Solution**: Make sure application is stopped during migration.
+
+#### Issue: Login fails after migration
+**Solution**: Verify credentials were migrated: Run `node usermanage.js list` or check database directly.
+
+### Application Issues
+
+#### Issue: Application won't start
+**Solution**: 
+- Check that `TOKEN_SECRET` is set in `.env`
+- Verify database file exists: `ls -lh oafrwp.db`
+- Check application logs for specific errors
+
+#### Issue: Database queries fail
+**Solution**: 
+- Ensure database file has correct permissions: `chmod 600 oafrwp.db`
+- Check that database was initialized: Run `node test-migration.js`
 
 ## Contributing
 
@@ -537,6 +740,13 @@ For technical support or questions:
 - **Issues**: GitHub Issues page
 
 ## Changelog
+
+### Version 2.0.0
+- Migrated from CSV to SQLite database
+- Added budget_current table for efficient state tracking
+- Converted user management script from Python to JavaScript
+- Improved performance and data integrity
+- Better backup and recovery options
 
 ### Version 1.0.0
 - Initial release
