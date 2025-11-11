@@ -327,6 +327,7 @@
           <h2>Dashboard</h2>
           <div class="actions">
             <button class="ghost" id="refreshBtn">Refresh</button>
+            <button class="ghost" id="createRequestBtn">Add Request</button>
             <button class="ghost" id="historyBtn" type="button">Budget History</button>
             <button class="ghost" id="filesBtn" type="button">Files</button>
           </div>
@@ -423,6 +424,89 @@
     </div>
   </div>
 
+  <!-- Create Request Modal -->
+  <div id="createModal" class="edit-modal">
+    <div class="edit-modal-content" style="max-width: 600px; max-height: 90vh;">
+      <div class="edit-modal-header">
+        <h3 class="edit-modal-title">Create New Request</h3>
+        <button class="edit-modal-close" id="createModalClose">&times;</button>
+      </div>
+      <form id="createForm">
+        <div class="edit-form-group">
+          <label class="edit-form-label" for="createEmail">Email Address *</label>
+          <input type="email" id="createEmail" class="edit-form-input" placeholder="user@example.com" required>
+        </div>
+        <div class="edit-form-group">
+          <label class="edit-form-label" for="createTitle">Title of Article/Chapter/Book *</label>
+          <input type="text" id="createTitle" class="edit-form-input" placeholder="Article title" required>
+        </div>
+        <div class="edit-form-group">
+          <label class="edit-form-label" for="createAmount">Amount Requested *</label>
+          <input type="number" id="createAmount" class="edit-form-input" placeholder="0.00" step="0.01" min="0" required>
+        </div>
+        <div class="edit-form-group">
+          <label class="edit-form-label" for="createAuthor">Corresponding Author Name</label>
+          <input type="text" id="createAuthor" class="edit-form-input" placeholder="Author name">
+        </div>
+        <div class="edit-form-group">
+          <label class="edit-form-label" for="createAuthorORCiD">Corresponding Author ORCiD</label>
+          <input type="text" id="createAuthorORCiD" class="edit-form-input" placeholder="0000-0000-0000-0000">
+        </div>
+        <div class="edit-form-group">
+          <label class="edit-form-label" for="createJournal">Title of Journal</label>
+          <input type="text" id="createJournal" class="edit-form-input" placeholder="Journal name">
+        </div>
+        <div class="edit-form-group">
+          <label class="edit-form-label" for="createJournalISSN">Journal ISSN</label>
+          <input type="text" id="createJournalISSN" class="edit-form-input" placeholder="ISSN">
+        </div>
+        <div class="edit-form-group">
+          <label class="edit-form-label" for="createPublisher">Publisher</label>
+          <input type="text" id="createPublisher" class="edit-form-input" placeholder="Publisher name">
+        </div>
+        <div class="edit-form-group">
+          <label class="edit-form-label" for="createArticleStatus">Article Status</label>
+          <input type="text" id="createArticleStatus" class="edit-form-input" placeholder="Article status">
+        </div>
+        <div class="edit-form-group">
+          <label class="edit-form-label" for="createPublicationType">Publication Type</label>
+          <input type="text" id="createPublicationType" class="edit-form-input" placeholder="Publication type">
+        </div>
+        <div class="edit-form-group">
+          <label class="edit-form-label" for="createDOI">DOI</label>
+          <input type="text" id="createDOI" class="edit-form-input" placeholder="10.xxxx/xxxx">
+        </div>
+        <div class="edit-form-group">
+          <label class="edit-form-label" for="createCollab">Collaborating Author List</label>
+          <textarea id="createCollab" class="edit-form-input edit-form-textarea" placeholder="Collaborating authors"></textarea>
+        </div>
+        <div class="edit-form-group">
+          <label class="edit-form-label" for="createCollabORCiD">Collaborating Author ORCiD List</label>
+          <textarea id="createCollabORCiD" class="edit-form-input edit-form-textarea" placeholder="ORCiD list"></textarea>
+        </div>
+        <div class="edit-form-group">
+          <label class="edit-form-label" for="createComment">Comment to Library Team</label>
+          <textarea id="createComment" class="edit-form-input edit-form-textarea" placeholder="Comments"></textarea>
+        </div>
+        <div class="edit-form-group">
+          <label class="edit-form-label" for="createOAStatus">OA Fund Status</label>
+          <select id="createOAStatus" class="edit-form-input">
+            <option value="submitted">submitted</option>
+            <option value="APPROVED">APPROVED</option>
+            <option value="DENIED">DENIED</option>
+            <option value="PAID">PAID</option>
+            <option value="PAYMENT_PLANNED">PAYMENT_PLANNED</option>
+            <option value="CANCELLED">CANCELLED</option>
+          </select>
+        </div>
+        <div class="edit-modal-actions">
+          <button type="button" class="edit-btn-cancel" id="createModalCancel">Cancel</button>
+          <button type="submit" class="edit-btn-save" id="createSaveBtn">Create Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     // ---- Token cookie helper + fetch wrapper ----
     function getTokenFromCookie() {
@@ -472,6 +556,7 @@
       const thead = document.getElementById('thead');
       const tbody = document.getElementById('tbody');
       const refreshBtn = document.getElementById('refreshBtn');
+      const createRequestBtn = document.getElementById('createRequestBtn');
       const totalBudgetEl = document.getElementById('totalBudget');
       const runningTotalEl = document.getElementById('runningTotal');
       const historyBtn = document.getElementById('historyBtn');
@@ -486,6 +571,11 @@
       // Navigate to files page
       filesBtn.addEventListener('click', () => {
         window.location.href = '/files-page';
+      });
+
+      // Open create request modal
+      createRequestBtn.addEventListener('click', () => {
+        openCreateModal();
       });
 
       // Column toggle functionality
@@ -607,12 +697,24 @@
         const firstColumn = headerArray[0] + '</th>';
         const remainingColumns = headerArray.slice(1).map(cell => cell + '</th>').join('');
         
-        thead.innerHTML = `<tr>` + firstColumn + `<th class="nowrap">Actions</th>` + remainingColumns + `<th class="nowrap">Edit</th></tr>`;
+        thead.innerHTML = `<tr>` + `<th class="nowrap">Edit</th>` + firstColumn + `<th class="nowrap">Actions</th>` + remainingColumns + `</tr>`;
         
 
         const frag = document.createDocumentFragment();
         rows.forEach((row) => {
           const tr = document.createElement('tr');
+          
+          // Add Edit Value button as the first column
+          const tdEdit = document.createElement('td');
+          tdEdit.className = 'edit-cell';
+          const editBtn = document.createElement('button');
+          editBtn.className = 'edit-btn';
+          editBtn.textContent = 'Edit Value';
+          editBtn.addEventListener('click', () => {
+            openEditModal(row);
+          });
+          tdEdit.appendChild(editBtn);
+          tr.appendChild(tdEdit);
           
           // Process columns in the preferred order
           cols.forEach((col, index) => {
@@ -669,18 +771,6 @@
               tr.appendChild(tdAct);
             }
           });
-
-          // Add Edit Value button as the last column
-          const tdEdit = document.createElement('td');
-          tdEdit.className = 'edit-cell';
-          const editBtn = document.createElement('button');
-          editBtn.className = 'edit-btn';
-          editBtn.textContent = 'Edit Value';
-          editBtn.addEventListener('click', () => {
-            openEditModal(row);
-          });
-          tdEdit.appendChild(editBtn);
-          tr.appendChild(tdEdit);
 
           frag.appendChild(tr);
         });
@@ -979,33 +1069,155 @@
         }
       });
       
-      // Handle escape key for edit modal
+      // Handle escape key for modals (consolidated)
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
           if (document.getElementById('editModal').classList.contains('show')) {
             closeEditModal();
+          } else if (document.getElementById('createModal').classList.contains('show')) {
+            closeCreateModal();
           }
+        }
+      });
+      
+      // Create request modal functionality
+      function openCreateModal() {
+        const modal = document.getElementById('createModal');
+        modal.classList.add('show');
+        
+        // Reset form
+        document.getElementById('createForm').reset();
+        document.getElementById('createOAStatus').value = 'submitted';
+        
+        // Focus on email field
+        document.getElementById('createEmail').focus();
+      }
+      
+      function closeCreateModal() {
+        const modal = document.getElementById('createModal');
+        modal.classList.remove('show');
+        
+        // Reset form
+        document.getElementById('createForm').reset();
+      }
+      
+      // Handle create form submission
+      document.getElementById('createForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const saveBtn = document.getElementById('createSaveBtn');
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Creating...';
+        
+        try {
+          // Build query parameters
+          const params = new URLSearchParams();
+          const email = document.getElementById('createEmail').value.trim();
+          const title = document.getElementById('createTitle').value.trim();
+          const amount = document.getElementById('createAmount').value.trim();
+          const author = document.getElementById('createAuthor').value.trim();
+          const authorORCiD = document.getElementById('createAuthorORCiD').value.trim();
+          const journal = document.getElementById('createJournal').value.trim();
+          const journalISSN = document.getElementById('createJournalISSN').value.trim();
+          const publisher = document.getElementById('createPublisher').value.trim();
+          const articleStatus = document.getElementById('createArticleStatus').value.trim();
+          const publicationType = document.getElementById('createPublicationType').value.trim();
+          const DOI = document.getElementById('createDOI').value.trim();
+          const collab = document.getElementById('createCollab').value.trim();
+          const collabORCiD = document.getElementById('createCollabORCiD').value.trim();
+          const comment = document.getElementById('createComment').value.trim();
+          const OAstatus = document.getElementById('createOAStatus').value.trim();
+          
+          if (!email || !title || !amount) {
+            alert('Please fill in all required fields (Email, Title, Amount).');
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Create Request';
+            return;
+          }
+          
+          if (email) params.append('email', email);
+          if (title) params.append('title', title);
+          if (amount) params.append('amount', amount);
+          if (author) params.append('author', author);
+          if (authorORCiD) params.append('authorORCiD', authorORCiD);
+          if (journal) params.append('journal', journal);
+          if (journalISSN) params.append('journalISSN', journalISSN);
+          if (publisher) params.append('publisher', publisher);
+          if (articleStatus) params.append('status', articleStatus);
+          if (publicationType) params.append('type', publicationType);
+          if (DOI) params.append('DOI', DOI);
+          if (collab) params.append('collab', collab);
+          if (collabORCiD) params.append('collabORCiD', collabORCiD);
+          if (comment) params.append('comment', comment);
+          if (OAstatus) params.append('OAstatus', OAstatus);
+          
+          const createUrl = "<%= typeof endPoint !== 'undefined' ? endPoint + '/createNoEmail' : 'http://localhost:3000/createNoEmail' %>";
+          const url = `${createUrl}?${params.toString()}`;
+          
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json; charset=utf-8'
+            }
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
+          }
+          
+          closeCreateModal();
+          // Refresh data to show new request
+          loadData();
+          loadBudget(); // Refresh budget in case status affects it
+          statusEl.textContent = 'Request created successfully.';
+        } catch (error) {
+          alert('Failed to create request: ' + error.message);
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Create Request';
+        }
+      });
+      
+      // Handle create modal close on background click
+      document.getElementById('createModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+          closeCreateModal();
         }
       });
       
       // Setup modal event listeners after DOM is ready
       function setupModalEventListeners() {
-        const closeBtn = document.getElementById('editModalClose');
-        const cancelBtn = document.getElementById('editModalCancel');
+        const editCloseBtn = document.getElementById('editModalClose');
+        const editCancelBtn = document.getElementById('editModalCancel');
+        const createCloseBtn = document.getElementById('createModalClose');
+        const createCancelBtn = document.getElementById('createModalCancel');
         
-        if (closeBtn) {
-          closeBtn.addEventListener('click', (e) => {
+        if (editCloseBtn) {
+          editCloseBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            console.log('Close button clicked');
             closeEditModal();
           });
         }
         
-        if (cancelBtn) {
-          cancelBtn.addEventListener('click', (e) => {
+        if (editCancelBtn) {
+          editCancelBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            console.log('Cancel button clicked');
             closeEditModal();
+          });
+        }
+        
+        if (createCloseBtn) {
+          createCloseBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeCreateModal();
+          });
+        }
+        
+        if (createCancelBtn) {
+          createCancelBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeCreateModal();
           });
         }
       }

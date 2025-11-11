@@ -961,6 +961,12 @@ app.put('/update/:timestamp', auth, async (req, res) => {
 			return res.status(400).send(400)
 		}
 
+		// Get the request before updating to check old status and amount
+		const oldRequest = await db.getRequestByTimestamp(timestamp)
+		if (!oldRequest) {
+			return res.status(404).send(404)
+		}
+
 		const updates = {}
 		if (req.query.email) updates.email = req.query.email
 		if (req.query.title) updates.title = req.query.title
@@ -977,6 +983,46 @@ app.put('/update/:timestamp', auth, async (req, res) => {
 		if (req.query.DOI) updates.DOI = req.query.DOI
 		if (req.query.comment) updates.comment = req.query.comment
 		if (req.query.OAstatus) updates.OAstatus = req.query.OAstatus
+
+		// Handle budget updates if OAstatus is changing
+		if (updates.OAstatus !== undefined) {
+			const oldStatus = (oldRequest.oa_fund_status || '').trim().toUpperCase()
+			const newStatus = updates.OAstatus.trim().toUpperCase()
+			const amount = Number(oldRequest.amount_requested) || 0
+
+			// Only process budget changes if status actually changed
+			if (oldStatus !== newStatus && amount > 0) {
+				// Calculate budget changes based on status transitions
+				// APPROVED: adds to running total
+				// CANCELLED (from APPROVED): subtracts from running total
+				// PAID: subtracts from both budget total and running total
+				// DENIED, PAYMENT_PLANNED, submitted: no budget changes
+
+				// Handle transitions involving PAID status first (highest priority)
+				if (oldStatus === PAID && newStatus !== PAID) {
+					// Was PAID, now changing to something else: add back to budget and running total
+					await changeBudgetTotal(amount, `${timestamp} ${oldStatus} -> ${newStatus} (status update)`)
+					await changeRunningTotal(amount, `${timestamp} ${oldStatus} -> ${newStatus} (status update)`)
+					// If changing to APPROVED, we also need to add to running total for APPROVED status
+					if (newStatus === APPROVED) {
+						await changeRunningTotal(amount, `${timestamp} ${oldStatus} -> ${newStatus} (status update - APPROVED)`)
+					}
+				} else if (oldStatus !== PAID && newStatus === PAID) {
+					// Changing to PAID: subtract from budget total and running total
+					// This correctly handles both APPROVED->PAID and other->PAID transitions
+					await changeBudgetTotal(-amount, `${timestamp} ${oldStatus} -> ${newStatus} (status update)`)
+					await changeRunningTotal(-amount, `${timestamp} ${oldStatus} -> ${newStatus} (status update)`)
+				}
+				// Handle APPROVED transitions (skip if PAID transitions were already handled above)
+				else if (oldStatus === APPROVED && newStatus !== APPROVED && newStatus !== PAID) {
+					// Was APPROVED, now changing to something else (except PAID): subtract from running total
+					await changeRunningTotal(-amount, `${timestamp} ${oldStatus} -> ${newStatus} (status update)`)
+				} else if (oldStatus !== APPROVED && newStatus === APPROVED && oldStatus !== PAID) {
+					// Changing to APPROVED from something else (except PAID): add to running total
+					await changeRunningTotal(amount, `${timestamp} ${oldStatus} -> ${newStatus} (status update)`)
+				}
+			}
+		}
 
 		const result = await db.updateRequest(timestamp, updates)
 		
@@ -1070,6 +1116,80 @@ app.post('/create', async (req, res) => {
 
 	} catch (error) {
 		console.log('Error creating request:', error)
+		res.status(400).send(400)
+	}
+
+})
+
+app.post('/createNoEmail', auth, async (req, res) => {
+
+	try {
+		let email
+		let title
+		let amount
+		let author
+		let authorORCiD
+		let collab
+		let collabORCiD
+		let journal
+		let journalISSN
+		let publisher
+		let status
+		let type
+		let DOI
+		let comment
+
+		let OAstatus = SUBMITTED
+
+		if (req.query.email) { email = req.query.email }
+		if (req.query.title) { title = req.query.title }
+		if (req.query.amount) { amount = req.query.amount }
+		if (req.query.author) { author = req.query.author }
+		if (req.query.authorORCiD) { authorORCiD = String(req.query.authorORCiD) }
+		if (req.query.collab) { collab = req.query.collab }
+		if (req.query.collabORCiD) { collabORCiD = String(req.query.collabORCiD) }
+		if (req.query.journal) { journal = req.query.journal }
+		if (req.query.journalISSN) { journalISSN = String(req.query.journalISSN) }
+		if (req.query.publisher) { publisher = req.query.publisher }
+		if (req.query.status) { status = req.query.status }
+		if (req.query.type) { type = req.query.type }
+		if (req.query.DOI) { DOI = String(req.query.DOI) }
+		if (req.query.comment) { comment = req.query.comment }
+		if (req.query.OAstatus) { OAstatus = req.query.OAstatus }
+
+		const requestData = {
+			timestamp: new Date().toISOString(),
+			email_address: email,
+			title_of_article: title,
+			amount_requested: amount,
+			corresponding_author_name: author,
+			corresponding_author_orcid: authorORCiD,
+			collaborating_author_list: collab,
+			collaborating_author_orcid_list: collabORCiD,
+			title_of_journal: journal,
+			journal_issn: journalISSN,
+			publisher: publisher,
+			article_status: status,
+			publication_type: type,
+			doi: DOI,
+			comment: comment,
+			oa_fund_status: OAstatus
+		}
+
+		await db.createRequest(requestData)
+
+		// Handle budget updates if initial status is APPROVED or PAID
+		if (OAstatus === APPROVED && amount) {
+			await changeRunningTotal(Number(amount), `${requestData.timestamp} ${APPROVED} (created via admin)`)
+		} else if (OAstatus === PAID && amount) {
+			await changeBudgetTotal(-Number(amount), `${requestData.timestamp} ${PAID} (created via admin)`)
+			await changeRunningTotal(-Number(amount), `${requestData.timestamp} ${PAID} (created via admin)`)
+		}
+
+		res.status(200).json({ success: true, timestamp: requestData.timestamp })
+
+	} catch (error) {
+		console.log('Error creating request (no email):', error)
 		res.status(400).send(400)
 	}
 
