@@ -40,7 +40,11 @@ async function testMigration() {
 		const urls = await db.getAllURLs()
 		console.log(`✓ URLs table: ${urls.length} records`)
 
-		// Test 7: Verify sample data structure
+		// Test 7: Check files table
+		const files = await db.getAllFiles()
+		console.log(`✓ Files table: ${files.length} records`)
+
+		// Test 8: Verify sample data structure
 		if (requests.length > 0) {
 			const sample = requests[0]
 			console.log('\nSample request fields:')
@@ -62,6 +66,16 @@ async function testMigration() {
 			users.forEach(user => {
 				console.log(`  - ${user.id}`)
 			})
+		}
+
+		if (files.length > 0) {
+			console.log('\nMigrated files:')
+			files.slice(0, 5).forEach(file => {
+				console.log(`  - ${file.name} (${file.email || 'unknown email'}, ${(file.size / 1024).toFixed(2)} KB)`)
+			})
+			if (files.length > 5) {
+				console.log(`  ... and ${files.length - 5} more files`)
+			}
 		}
 
 		console.log('\n✓ All tests passed! Migration successful.')

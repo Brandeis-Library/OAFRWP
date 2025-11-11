@@ -195,7 +195,8 @@ The migration script will:
   - ✅ `budget.csv`
   - ✅ `cred.csv` (user credentials)
   - ✅ `urls.csv` (if exists)
-- **Note**: Files table is created but files are not migrated from filesystem (files uploaded after migration will be tracked automatically)
+  - ✅ Files from `/files` directory (scans filesystem and registers existing files in database)
+- **Note**: Files are scanned from the `/files` directory and their metadata (filename, size, email extracted from filename, file path) is registered in the database. Files uploaded after migration will be tracked automatically.
 
 #### Step 3: Test Migration
 ```bash
@@ -228,9 +229,14 @@ sqlite3 oafrwp.db
 SELECT COUNT(*) FROM requests;
 SELECT COUNT(*) FROM budget;
 SELECT COUNT(*) FROM credentials;
+SELECT COUNT(*) FROM urls;
+SELECT COUNT(*) FROM files;
 
 # Get latest budget
 SELECT * FROM budget ORDER BY timestamp DESC LIMIT 1;
+
+# View sample files
+SELECT filename, email, file_size, timestamp FROM files ORDER BY timestamp DESC LIMIT 5;
 
 # Exit
 .quit

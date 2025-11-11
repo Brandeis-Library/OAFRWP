@@ -1,6 +1,7 @@
 // Migration script to import CSV data into SQLite database
 import * as db from './db.js'
 import fs from 'fs'
+import fsp from 'fs/promises'
 import { parse } from 'csv-parse'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -182,6 +183,93 @@ async function migrateCredentials() {
 	}
 }
 
+async function migrateFiles() {
+	try {
+		const FILES_DIR = path.join(__dirname, 'files')
+		
+		// Check if files directory exists
+		if (!fs.existsSync(FILES_DIR)) {
+			console.log('Files directory does not exist, skipping file migration')
+			return
+		}
+
+		// Get all files from database to avoid duplicates
+		const existingFiles = await db.getAllFiles()
+		const existingFilenames = new Set(existingFiles.map(f => f.name))
+
+		// Read files from filesystem
+		const entries = await fsp.readdir(FILES_DIR, { withFileTypes: true })
+		const filesToMigrate = []
+
+		for (const entry of entries) {
+			if (!entry.isFile()) continue
+			if (entry.name.startsWith('.')) continue
+			if (existingFilenames.has(entry.name)) continue // Already in database
+
+			const filePath = path.join(FILES_DIR, entry.name)
+			const stats = await fsp.stat(filePath)
+
+			// Try to extract email from filename (format: emailSafe__originalname-timestamp.pdf)
+			// The emailSafe format replaces invalid chars with _ but preserves @ symbol
+			let email = 'unknown@brandeis.edu'
+			const emailMatch = entry.name.match(/^([^_]+)__/)
+			if (emailMatch) {
+				const emailPart = emailMatch[1]
+				if (emailPart === 'NOEMAIL') {
+					email = 'unknown@brandeis.edu'
+				} else if (emailPart.includes('@')) {
+					// Email contains @, use it directly (may have _ replacing other chars)
+					email = emailPart.replace(/_/g, '')
+				} else {
+					// No @ found, try to reconstruct (unlikely but handle edge cases)
+					// If it looks like it might be an email without @, set to unknown
+					email = 'unknown@brandeis.edu'
+				}
+			}
+
+			filesToMigrate.push({
+				filename: entry.name,
+				originalFilename: entry.name,
+				email: email,
+				fileSize: stats.size,
+				filePath: filePath,
+				timestamp: stats.mtime.toISOString()
+			})
+		}
+
+		if (filesToMigrate.length === 0) {
+			console.log('No new files to migrate (all files already in database or directory is empty)')
+			return
+		}
+
+		console.log(`Migrating ${filesToMigrate.length} files from filesystem...`)
+		let count = 0
+
+		for (const file of filesToMigrate) {
+			try {
+				await db.runQueryHelper(`
+					INSERT INTO files (timestamp, filename, original_filename, email, file_size, file_path)
+					VALUES (?, ?, ?, ?, ?, ?)
+				`, [
+					file.timestamp,
+					file.filename,
+					file.originalFilename,
+					file.email,
+					file.fileSize,
+					file.filePath
+				])
+				count++
+			} catch (error) {
+				console.error(`Error migrating file ${file.filename}:`, error.message)
+			}
+		}
+
+		console.log(`Successfully migrated ${count} files`)
+	} catch (error) {
+		console.error('Error migrating files:', error)
+	}
+}
+
 async function main() {
 	console.log('Starting migration from CSV to SQLite...')
 	console.log('')
@@ -204,10 +292,13 @@ async function main() {
 	console.log('')
 	await migrateCredentials()
 	console.log('')
+	await migrateFiles()
+	console.log('')
 
 	console.log('Migration completed!')
 	console.log('You can now use the SQLite database instead of CSV files.')
 	console.log('Note: The original CSV files are preserved for backup.')
+	console.log('Note: Files in /files directory have been registered in the database.')
 }
 
 main().catch((error) => {
