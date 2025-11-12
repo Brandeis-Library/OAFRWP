@@ -852,7 +852,6 @@
           const res = await fetch(fetchUrl, { method: 'GET', headers: { 'Accept': 'application/json; charset=utf-8' } });
           if (!res.ok) throw new Error('HTTP ' + res.status);
           let data = await res.json();
-          data = data.reverse()
           renderTable(Array.isArray(data) ? data : []);
           statusEl.textContent = `Loaded ${Array.isArray(data) ? data.length : 0} record(s).`;
         } catch (err) {
