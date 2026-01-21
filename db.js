@@ -553,6 +553,16 @@ export async function getFileByFilename(filename) {
 	}
 }
 
+export async function updateFileName(oldFilename, newFilename, newFilePath) {
+	const db = await getDatabase()
+	try {
+		await runQuery(db, `UPDATE files SET filename = ?, file_path = ? WHERE filename = ?`, [newFilename, newFilePath, oldFilename])
+		return true
+	} finally {
+		db.close()
+	}
+}
+
 // Credentials operations
 export async function getUserById(id) {
 	const db = await getDatabase()

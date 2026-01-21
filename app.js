@@ -32,6 +32,10 @@ import crypto from 'crypto'
 const TOKEN_TTL_SECONDS = 60 * 60
 import 'dotenv/config'
 const TOKEN_SECRET = process.env.TOKEN_SECRET
+if (!TOKEN_SECRET) {
+	console.error('ERROR: TOKEN_SECRET is not set in environment variables. Please set it in .env file.')
+	process.exit(1)
+}
 import cookieParser from 'cookie-parser'
 app.use(cookieParser())
 
@@ -426,34 +430,36 @@ function auth(req, res, next) {
 
 app.post('/login', async (req, res) => {
 
-	const { id, pass } = req.body || {}
+	try {
+		const { id, pass } = req.body || {}
 
-	if (typeof id !== 'string' || typeof pass !== 'string') {
+		if (typeof id !== 'string' || typeof pass !== 'string') {
+			return res.status(400).json({ error: 'Invalid request format' })
+		}
 
-		return res.status(400).send(400)
+		const users = await loadUserMap()
+		const stored = users.get(id)
 
+		if (!stored || !verifyPass(pass, stored)) {
+			return res.status(401).json({ error: 'Invalid credentials' })
+		}
+
+		const token = signToken({ sub: id, ip: String(req.ip) }, TOKEN_SECRET)
+
+		const cookieOptions = {
+			httpOnly: true,
+			sameSite: 'lax',
+			secure: false,
+			maxAge: TOKEN_TTL_SECONDS * 1000,
+			path: '/'
+		}
+
+		res.cookie('token', token, cookieOptions)
+		res.json({ token, expiresIn: TOKEN_TTL_SECONDS })
+	} catch (error) {
+		console.error('Login error:', error)
+		return res.status(500).json({ error: 'Login failed: ' + error.message })
 	}
-
-	const users = await loadUserMap()
-	const stored = users.get(id)
-
-	if (!stored || !verifyPass(pass, stored)) {
-		return res.status(401).send(401)
-
-	}
-
-	const token = signToken({ sub: id, ip: String(req.ip) }, TOKEN_SECRET)
-
-	const cookieOptions = {
-		httpOnly: true,
-		sameSite: 'lax',
-		secure: false,
-		maxAge: TOKEN_TTL_SECONDS * 1000,
-		path: '/'
-	}
-
-	res.cookie('token', token, cookieOptions)
-	res.json({ token, expiresIn: TOKEN_TTL_SECONDS })
 
 })
 
@@ -497,6 +503,7 @@ function sendEmail(to, subject, html, from) {
 	TRANSPORTER.sendMail({
 		from: from || "no-reply@library.brandeis.edu",
 		to: to || "librarypublishing@brandeis.edu",
+		cc: "librarypublishing@brandeis.edu",
 		subject: subject || "Update on Brandeis University Open Access Fund",
 		html: html || "<p>There has been an update to your Open Access Fund request.</p>"
 	})
@@ -517,6 +524,7 @@ async function sendConfirmationEmail(recipientEmail) {
 		await TRANSPORTER.sendMail({
 			from: "no-reply@library.brandeis.edu",
 			to: recipientEmail,
+			cc: "librarypublishing@brandeis.edu",
 			subject: "Open Access Fund Request Submitted Successfully",
 			html: confirmationHtml
 		})
@@ -629,6 +637,7 @@ async function sendApplicationUpdateEmail(recipientEmail, status, additionalInfo
 		await TRANSPORTER.sendMail({
 			from: "no-reply@oafund.library.brandeis.edu",
 			to: recipientEmail,
+			cc: "librarypublishing@brandeis.edu",
 			subject: config.subject,
 			html: updateHtml
 		})
@@ -1229,6 +1238,80 @@ app.get('/fetchBudget', auth, async (req, res) => {
 		res.status(400).send(400)
 	}
 
+})
+
+app.put('/renameFile/:filename', auth, async (req, res) => {
+	try {
+		const oldFilename = decodeURIComponent(req.params.filename)
+		const newFilename = req.body.newFilename
+
+		if (!newFilename || typeof newFilename !== 'string' || !newFilename.trim()) {
+			return res.status(400).json({ error: 'New filename is required' })
+		}
+
+		// Validate filename (must be PDF and safe)
+		if (!newFilename.toLowerCase().endsWith('.pdf')) {
+			return res.status(400).json({ error: 'Filename must end with .pdf' })
+		}
+
+		// Get file record from database
+		const fileRecord = await db.getFileByFilename(oldFilename)
+		if (!fileRecord) {
+			return res.status(404).json({ error: 'File not found in database' })
+		}
+
+		// Extract email and timestamp from old filename to preserve them
+		// Format: email__originalname-timestamp.pdf
+		let emailPrefix = 'NOEMAIL'
+		let timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+		
+		const oldFilenameParts = oldFilename.split('__')
+		if (oldFilenameParts.length >= 2) {
+			emailPrefix = oldFilenameParts[0]
+			// Extract timestamp from the second part (format: name-timestamp.pdf)
+			const nameWithTimestamp = oldFilenameParts[1]
+			const timestampMatch = nameWithTimestamp.match(/-(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z)\.pdf$/)
+			if (timestampMatch) {
+				timestamp = timestampMatch[1]
+			}
+		}
+
+		// Sanitize the new filename (remove .pdf extension if present, we'll add it back)
+		let newNameBase = newFilename.trim().replace(/\.pdf$/i, '')
+		newNameBase = newNameBase.replace(/[^À-\u024f\w\- .]+/g, '_').trim().replace(/\s+/g, '_')
+		
+		// Construct new filename with preserved email and timestamp
+		const sanitizedNewFilename = `${emailPrefix}__${newNameBase}-${timestamp}.pdf`
+
+		// Construct old and new file paths
+		const oldFilePath = path.join(FILES_DIR, oldFilename)
+		const newFilePath = path.join(FILES_DIR, sanitizedNewFilename)
+
+		// Check if old file exists
+		if (!fs.existsSync(oldFilePath)) {
+			return res.status(404).json({ error: 'File not found on filesystem' })
+		}
+
+		// Check if new filename already exists
+		if (fs.existsSync(newFilePath)) {
+			return res.status(409).json({ error: 'A file with this name already exists' })
+		}
+
+		// Rename file in filesystem
+		await fsp.rename(oldFilePath, newFilePath)
+
+		// Update database record
+		await db.updateFileName(oldFilename, sanitizedNewFilename, newFilePath)
+
+		res.status(200).json({ 
+			success: true, 
+			oldFilename: oldFilename,
+			newFilename: sanitizedNewFilename 
+		})
+	} catch (error) {
+		console.error('Error renaming file:', error)
+		res.status(500).json({ error: 'Failed to rename file: ' + error.message })
+	}
 })
 
 app.listen(port, () => {

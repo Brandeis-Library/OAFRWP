@@ -105,6 +105,8 @@ The Open Access Funding Request Workflow Project (OAFRWP) is a Node.js-based web
 - **JavaScript (ES6+)**: Client-side functionality
 - **Responsive Design**: Mobile-friendly interface
 - **Brandeis Branding**: University-specific styling
+- **Inter Font**: Consistent typography across all browsers and operating systems (via Google Fonts)
+- **Flexbox Layout**: Scrollable tables with sticky headers
 
 ### Data Storage
 - **SQLite Database**: Primary data storage (oafrwp.db)
@@ -138,6 +140,8 @@ The Open Access Funding Request Workflow Project (OAFRWP) is a Node.js-based web
    ```bash
    npm install
    ```
+
+   **Note about security**: The package.json includes an `overrides` section to ensure secure versions of dependencies (e.g., tar >= 7.5.4). This is automatically applied during installation.
 
    **Note about sqlite3**: The `sqlite3` package uses native bindings. If you encounter build issues:
    - **macOS**: Install Xcode Command Line Tools: `xcode-select --install`
@@ -447,6 +451,7 @@ Upload PDF files
 Submit document URL
 - **Body**: `{ "url": "https://...", "email": "user@brandeis.edu" }`
 - **Response**: `{ "message": "URL uploaded successfully" }`
+- **Note**: Available from both public upload page and admin files page
 
 #### GET /files
 List uploaded files (Admin only)
@@ -458,6 +463,14 @@ List uploaded files (Admin only)
 List submitted URLs (Admin only)
 - **Headers**: `Authorization: Bearer <token>`
 - **Response**: `{ "urls": [url_objects] }`
+- **Note**: Returns URLs with capitalized field names (Timestamp, URL, Email) for backward compatibility
+
+#### PUT /renameFile/:filename
+Rename an uploaded file (Admin only)
+- **Headers**: `Authorization: Bearer <token>`
+- **Body**: `{ "newFilename": "newname.pdf" }`
+- **Response**: `{ "success": true, "oldFilename": "...", "newFilename": "..." }`
+- **Note**: Preserves email prefix and timestamp from original filename. New filename must end with .pdf
 
 ### Budget Management
 
@@ -577,25 +590,34 @@ Debug SSO attributes
 - **Features**:
   - Request listing with filtering
   - Status management
-  - Budget display
+  - Budget display (shows 0 instead of N/A when budget is zero)
   - Action buttons
   - Column toggles
+  - Scrollable table with sticky header
+  - Brandeis logo in hero section
 
 #### Budget History (`/budget-history`)
 - **Purpose**: Track budget changes
 - **Features**:
-  - Budget history table
+  - Budget history table (newest entries first)
   - Budget controls
   - Running total tracking
   - Change management
+  - Scrollable table with sticky header
+  - Brandeis logo in hero section
+  - Displays 0 instead of N/A when budget is zero
 
 #### Files Management (`/files-page`)
 - **Purpose**: Manage uploaded files and URLs
 - **Features**:
-  - File listing
-  - URL listing
-  - File download
-  - Upload tracking
+  - File listing with metadata (email, date, size)
+  - URL listing with metadata
+  - File download/view
+  - File rename functionality (preserves email prefix in filename)
+  - Direct file upload from admin panel
+  - Direct URL upload from admin panel
+  - Scrollable table with sticky header
+  - Brandeis logo in hero section
 
 ### Email Templates
 
@@ -603,11 +625,13 @@ Debug SSO attributes
 - **Trigger**: Request submission
 - **Template**: `confirmation.ejs`
 - **Content**: Request confirmation and next steps
+- **CC**: All emails are CC'd to `librarypublishing@brandeis.edu`
 
 #### Status Update Emails
 - **Trigger**: Status changes
 - **Template**: `application-update.ejs`
 - **Content**: Status-specific messages and next steps
+- **CC**: All emails are CC'd to `librarypublishing@brandeis.edu`
 
 ## User Management
 
@@ -648,6 +672,7 @@ node usermanage.js list
 - **Input Sanitization**: XSS prevention
 - **Database Security**: Proper file permissions on oafrwp.db
 - **SQL Injection Protection**: Parameterized queries
+- **Dependency Security**: npm package vulnerabilities addressed with overrides
 
 ### File Security
 - **Upload Limits**: 50MB per file, 10 files max
@@ -810,6 +835,26 @@ For technical support or questions:
 - **Issues**: GitHub Issues page
 
 ## Changelog
+
+### Version 2.1.0 (Latest)
+- **UI Improvements**:
+  - Added Inter font (Google Fonts) for consistent typography across all browsers and operating systems
+  - Made all tables scrollable with sticky headers (requests, budget-history, files pages)
+  - Added Brandeis logo to hero sections on admin pages
+  - Fixed budget display to show "0" instead of "N/A" when budget is zero
+  - Fixed budget history ordering to show newest entries first
+- **File Management Enhancements**:
+  - Added file rename functionality with pencil icon (preserves email prefix and timestamp)
+  - Added direct file upload from admin files page
+  - Added direct URL upload from admin files page
+  - Improved URL display with proper field mapping (handles capitalized database fields)
+- **Email Improvements**:
+  - All emails now CC `librarypublishing@brandeis.edu` automatically
+- **Security & Bug Fixes**:
+  - Fixed npm vulnerabilities (added tar package override)
+  - Improved login error handling with consistent JSON error responses
+  - Added TOKEN_SECRET validation on server startup
+  - Fixed filename encoding issues in rename endpoint
 
 ### Version 2.0.0
 - Migrated from CSV to SQLite database
